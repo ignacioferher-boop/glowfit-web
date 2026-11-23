@@ -8,5 +8,6 @@ export type Product = {
   price_cents: number;
   images: string[];
   sort: number;
+  tagline?: string | null;
 };
 export type Page = { slug: string; title: string; content: string };

@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { supabaseAdmin } from '@/lib/data';
+import { supabasePublic } from '@/lib/data';
+import { customerEmail, sendEmail, shopEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_SECRET_KEY;
   const whsec = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret || !whsec) return NextResponse.json({ error: 'not configured' }, { status: 503 });
+  const orderSecret = process.env.ORDER_SECRET;
+  if (!secret || !whsec || !orderSecret || !supabasePublic) return NextResponse.json({ error: 'not configured' }, { status: 503 });
   const stripe = new Stripe(secret);
 
   const raw = await req.text();
@@ -23,21 +25,31 @@ export async function POST(req: Request) {
     const items = (full.line_items?.data || []).map((li) => ({
       name: li.description, qty: li.quantity, unit_cents: li.price?.unit_amount, total_cents: li.amount_total,
     }));
-    const { error } = await supabaseAdmin().from('orders').upsert({
+    const order = {
       stripe_session_id: full.id,
       status: full.payment_status === 'paid' ? 'paid' : full.payment_status,
-      email: full.customer_details?.email,
-      name: shipping?.name || full.customer_details?.name,
-      phone: full.customer_details?.phone || full.metadata?.phone,
+      email: full.customer_details?.email || full.customer_email,
+      name: full.metadata?.name || shipping?.name || full.customer_details?.name,
+      phone: full.metadata?.phone || full.customer_details?.phone,
       shipping_address: shipping?.address ?? full.customer_details?.address ?? null,
       items,
       subtotal_cents: full.amount_subtotal ?? 0,
       shipping_cents: full.total_details?.amount_shipping ?? 0,
       total_cents: full.amount_total ?? 0,
-    }, { onConflict: 'stripe_session_id' });
+      accepts_marketing: full.metadata?.accepts_marketing !== 'false',
+    };
+    const { data, error } = await supabasePublic.rpc('record_order', { p_secret: orderSecret, p_order: order });
     if (error) {
       console.error('Error guardando pedido', error);
       return NextResponse.json({ error: 'db' }, { status: 500 }); // Stripe reintentará
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    // Emails de confirmación (solo una vez y solo si el pago está hecho)
+    if (row && !row.email_sent && order.status === 'paid' && order.email) {
+      const mail = { order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };
+      const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
+      if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
+      if (ok) await supabasePublic.rpc('mark_order_emailed', { p_secret: orderSecret, p_session: full.id });
     }
   }
   return NextResponse.json({ received: true });

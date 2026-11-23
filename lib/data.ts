@@ -18,12 +18,14 @@ const FIELDS = 'id,slug,name,category,short_description,description,price_cents,
 
 export async function getProducts(): Promise<Product[]> {
   if (!supabasePublic) return SEED_PRODUCTS;
-  const { data, error } = await supabasePublic.from('products').select(FIELDS).eq('active', true).order('sort');
+  const q = (f: string) => supabasePublic!.from('products').select(f).eq('active', true).order('sort');
+  let { data, error } = await q(FIELDS + ',tagline');
+  if (error) ({ data, error } = await q(FIELDS));
   if (error || !data) {
     console.error('getProducts', error);
     return SEED_PRODUCTS;
   }
-  return data as Product[];
+  return data as unknown as Product[];
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {

@@ -29,7 +29,7 @@ export function enrich(products: Product[]): ShopProduct[] {
     const fallback = (p.short_description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(/(?<=[.?!])\s/)[0] || null;
     return {
       ...p,
-      tagline: x?.tagline ?? fallback,
+      tagline: p.tagline || x?.tagline || fallback,
       badge: compareAtCents ? null : x?.badge ?? null,
       includes,
       compareAtCents,
