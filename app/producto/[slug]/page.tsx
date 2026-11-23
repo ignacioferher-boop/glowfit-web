@@ -54,14 +54,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.compareAtCents && <s>{formatEUR(product.compareAtCents)}</s>}
             {save > 0 && <span className="card-badge save static">Ahorras {formatEUR(save)}</span>}
           </div>
-          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : ` · Envío gratis desde ${formatEUR(SHIPPING.freeFromCents)}`)}</p>
+          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : ` · Envío gratis desde ${formatEUR(SHIPPING.freeFromCents).replace(",00", "")}`)}</p>
 
           {isPack && (
             <div className="pack-includes">
               <p className="kiona pack-title">ESTE PACK INCLUYE</p>
               <ul>
                 {product.includes.map((i) => (
-                  <li key={i.slug}><a href={`/producto/${i.slug}/`}><img src={i.images[0]} alt="" loading="lazy" /><span>{i.name}</span><small>{formatEUR(i.price_cents)}</small></a></li>
+                  <li key={i.slug}><a href={`/producto/${i.slug}/`}><img src={i.images[0]} alt="" /><span>{i.name}</span><small>{formatEUR(i.price_cents)}</small></a></li>
                 ))}
               </ul>
             </div>
