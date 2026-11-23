@@ -1,0 +1,28 @@
+// Ajustes de la tienda. Los marcados PENDIENTE CLIENTE hay que confirmarlos.
+export const SITE = {
+  name: 'Glowfit',
+  tagline: 'Bienestar · Belleza · Hábitos',
+  // PENDIENTE CLIENTE: número de WhatsApp en formato internacional sin "+" (ej. 34600000000)
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '',
+  // PENDIENTE CLIENTE: email público de contacto
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
+};
+
+export const SHIPPING = {
+  // PENDIENTE CLIENTE: precio de envío estándar a España (en céntimos)
+  standardCents: Number(process.env.SHIPPING_STANDARD_CENTS || 495),
+  // PENDIENTE CLIENTE: envío gratis a partir de este subtotal (en céntimos). 0 = nunca gratis
+  freeFromCents: Number(process.env.SHIPPING_FREE_FROM_CENTS || 5000),
+  // PENDIENTE CLIENTE: plazo de entrega en días laborables
+  minDays: 2,
+  maxDays: 4,
+};
+
+export const MEDIA_BASE =
+  (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vwyvmqsxiazcrhjdiucm.supabase.co') +
+  '/storage/v1/object/public/media/uploads';
+
+export const media = (path: string) => `${MEDIA_BASE}/${path}`;
+
+export const formatEUR = (cents: number) =>
+  new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
