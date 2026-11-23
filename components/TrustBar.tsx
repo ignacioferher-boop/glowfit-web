@@ -1,4 +1,5 @@
-import { SHIPPING, formatEUR } from '@/lib/config';
+import { SHIPPING } from '@/lib/config';
+import { Price } from './currency';
 
 const I = {
   truck: <path d="M3 6h11v9H3zM14 9h4l3 3v3h-7M7 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />,
@@ -11,8 +12,8 @@ const Icon = ({ d }: { d: React.ReactNode }) => (
 );
 
 export default function TrustBar({ variant = 'row' }: { variant?: 'row' | 'list' }) {
-  const items = [
-    { i: I.truck, t: SHIPPING.freeFromCents > 0 ? `Envío gratis desde ${formatEUR(SHIPPING.freeFromCents).replace(',00', '')}` : 'Envío a toda España', s: 'Pedidos a toda España' },
+  const items: { i: React.ReactNode; t: React.ReactNode; s: string }[] = [
+    { i: I.truck, t: SHIPPING.freeFromCents > 0 ? <>Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></> : 'Envío a toda España', s: 'Pedidos a toda España' },
     { i: I.clock, t: `Entrega en ${SHIPPING.minDays}–${SHIPPING.maxDays} días`, s: 'Días laborables' },
     { i: I.lock, t: 'Pago 100% seguro', s: 'Tarjeta, Apple Pay, Google Pay, PayPal' },
     { i: I.back, t: '14 días para devolver', s: 'Productos sin abrir' },
@@ -20,7 +21,7 @@ export default function TrustBar({ variant = 'row' }: { variant?: 'row' | 'list'
   return (
     <ul className={`trust trust-${variant}`}>
       {items.map((x) => (
-        <li key={x.t}><span className="trust-icon"><Icon d={x.i} /></span><span><strong>{x.t}</strong><small>{x.s}</small></span></li>
+        <li key={x.s}><span className="trust-icon"><Icon d={x.i} /></span><span><strong>{x.t}</strong><small>{x.s}</small></span></li>
       ))}
     </ul>
   );

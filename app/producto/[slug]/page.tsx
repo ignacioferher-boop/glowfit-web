@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getProducts } from '@/lib/data';
-import { formatEUR, SHIPPING } from '@/lib/config';
+import { SHIPPING } from '@/lib/config';
 import { enrich } from '@/lib/shop';
 import Gallery from '@/components/Gallery';
 import AddToCart from '@/components/AddToCart';
@@ -55,7 +55,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.compareAtCents && <s><Price cents={product.compareAtCents} /></s>}
             {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
           </div>
-          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : ` · Envío gratis desde ${formatEUR(SHIPPING.freeFromCents).replace(",00", "")}`)}</p>
+          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
 
           {isPack && (
             <div className="pack-includes">
@@ -82,7 +82,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             )}
             <details>
               <summary>Envíos y entregas</summary>
-              <p>Enviamos a toda España en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables. El envío cuesta {formatEUR(SHIPPING.standardCents)}{SHIPPING.freeFromCents > 0 && <> y es gratis a partir de {formatEUR(SHIPPING.freeFromCents)}</>}. <a href="/envios-y-entregas/">Más información</a></p>
+              <p>Enviamos a toda España en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables. El envío cuesta <Price cents={SHIPPING.standardCents} />{SHIPPING.freeFromCents > 0 && <> y es gratis a partir de <Price cents={SHIPPING.freeFromCents} /></>}. <a href="/envios-y-entregas/">Más información</a></p>
             </details>
             <details>
               <summary>Devoluciones</summary>
