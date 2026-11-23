@@ -1,12 +1,12 @@
 import type { Product } from './types';
 
-// Textos cortos de tienda (sin alegaciones de salud) y composición de packs.
+// Texto corto bajo el nombre (para qué sirve) y composición de packs.
 const EXTRA: Record<string, { tagline: string; badge?: string; includes?: string[] }> = {
-  glow: { tagline: 'Un extra para acompañar tus objetivos', badge: 'Favorito' },
-  bloom: { tagline: 'Tu aliado para sentirte ligera cada día' },
-  'curcuma-y-curcumina': { tagline: 'El cuidado de la cúrcuma en tu rutina' },
-  'pack-glowxpro-bloom': { tagline: 'GlowXpro + Bloom, la pareja perfecta', includes: ['glow', 'bloom'] },
-  'pack-silueta-perfecta': { tagline: 'Los tres esenciales Glowfit juntos', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
+  glow: { tagline: 'Quemagrasas termogénico: activa el metabolismo y te ayuda a controlar tu peso.', badge: 'Favorito' },
+  bloom: { tagline: 'Drenante: ayuda a eliminar líquidos retenidos, hinchazón y pesadez.' },
+  'curcuma-y-curcumina': { tagline: 'Para mejores digestiones y una piel más luminosa. Con 95 % de curcumina.' },
+  'pack-glowxpro-bloom': { tagline: 'Quemagrasas + drenante: control de peso y menos hinchazón.', includes: ['glow', 'bloom'] },
+  'pack-silueta-perfecta': { tagline: 'Rutina completa: quema grasa, drena líquidos y mejora tus digestiones.', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
 };
 
 export type ShopProduct = Product & {
