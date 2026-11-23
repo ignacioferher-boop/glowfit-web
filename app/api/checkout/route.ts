@@ -1,17 +1,34 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getProducts } from '@/lib/data';
+import { getProducts, supabasePublic } from '@/lib/data';
+import { LEGAL } from '@/lib/legal';
 import { SHIPPING } from '@/lib/config';
 
-export async function POST(req: Request) {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) return NextResponse.json({ error: 'El pago aún no está activado. Escríbenos por WhatsApp para completar tu pedido.' }, { status: 503 });
-  const stripe = new Stripe(secret);
+type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
-  let body: { items?: { slug: string; qty: number }[] };
+export async function POST(req: Request) {
+  let body: { items?: { slug: string; qty: number }[]; customer?: CustomerIn };
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Petición no válida' }, { status: 400 }); }
   const requested = (body.items || []).filter((i) => typeof i.slug === 'string' && Number.isInteger(i.qty) && i.qty > 0 && i.qty <= 20);
   if (!requested.length) return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 });
+
+  // Datos del cliente: obligatorios para comprar
+  const c = body.customer || {};
+  const name = String(c.name || '').trim().slice(0, 200);
+  const email = String(c.email || '').trim().toLowerCase().slice(0, 200);
+  const phone = String(c.phone || '').trim().slice(0, 40);
+  if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/[^0-9]/g, '').length < 9)
+    return NextResponse.json({ error: 'Revisa tu nombre, email y teléfono' }, { status: 400 });
+  if (c.accepted_terms !== true) return NextResponse.json({ error: 'Debes aceptar las condiciones de contratación' }, { status: 400 });
+
+  const { error: custErr } = await supabasePublic!.from('customers').insert({
+    name, email, phone, accepts_marketing: c.accepts_marketing !== false, terms_version: LEGAL.termsVersion, cart: requested,
+  });
+  if (custErr) console.error('Error guardando cliente', custErr);
+
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) return NextResponse.json({ error: 'El pago online se activará en breve. Hemos guardado tus datos y te contactaremos para completar tu pedido.' }, { status: 503 });
+  const stripe = new Stripe(secret);
 
   // Precios siempre desde la base de datos, nunca desde el navegador
   const catalog = await getProducts();
@@ -37,7 +54,7 @@ export async function POST(req: Request) {
       },
     })),
     shipping_address_collection: { allowed_countries: ['ES'] },
-    phone_number_collection: { enabled: true },
+    customer_email: email,
     shipping_options: [{
       shipping_rate_data: {
         type: 'fixed_amount',
@@ -46,7 +63,7 @@ export async function POST(req: Request) {
         delivery_estimate: { minimum: { unit: 'business_day', value: SHIPPING.minDays }, maximum: { unit: 'business_day', value: SHIPPING.maxDays } },
       },
     }],
-    metadata: { items: JSON.stringify(lines.map(({ p, qty }) => ({ slug: p.slug, qty }))) },
+    metadata: { items: JSON.stringify(lines.map(({ p, qty }) => ({ slug: p.slug, qty }))), name, phone, accepts_marketing: String(c.accepts_marketing !== false), terms_version: LEGAL.termsVersion },
     success_url: `${site}/checkout/exito/?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${site}/carrito/`,
   });

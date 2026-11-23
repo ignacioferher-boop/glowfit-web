@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       status: full.payment_status === 'paid' ? 'paid' : full.payment_status,
       email: full.customer_details?.email,
       name: shipping?.name || full.customer_details?.name,
-      phone: full.customer_details?.phone,
+      phone: full.customer_details?.phone || full.metadata?.phone,
       shipping_address: shipping?.address ?? full.customer_details?.address ?? null,
       items,
       subtotal_cents: full.amount_subtotal ?? 0,
