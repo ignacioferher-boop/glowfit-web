@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import CartIcon from './CartIcon';
+import { CurrencySelect } from './currency';
 import { media } from '@/lib/config';
 
 const NAV = [
@@ -19,6 +20,7 @@ export default function Header() {
           {NAV.map((n) => <a key={n.href} href={n.href} onClick={() => setOpen(false)}>{n.label}</a>)}
         </nav>
         <div className="header-actions">
+          <CurrencySelect />
           <CartIcon />
           <button className="menu-toggle" aria-expanded={open} aria-label="Abrir menú" onClick={() => setOpen(!open)}>
             <span /><span />

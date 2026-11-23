@@ -7,6 +7,7 @@ import Gallery from '@/components/Gallery';
 import AddToCart from '@/components/AddToCart';
 import ProductCard from '@/components/ProductCard';
 import TrustBar from '@/components/TrustBar';
+import { Price, CurrencyNote } from '@/components/currency';
 
 export const revalidate = 300;
 
@@ -50,9 +51,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <h1>{product.name}</h1>
           {product.tagline && <p className="product-tagline">{product.tagline}</p>}
           <div className="price-row">
-            <span className="price big">{formatEUR(product.price_cents)}</span>
-            {product.compareAtCents && <s>{formatEUR(product.compareAtCents)}</s>}
-            {save > 0 && <span className="card-badge save static">Ahorras {formatEUR(save)}</span>}
+            <Price className="price big" cents={product.price_cents} />
+            {product.compareAtCents && <s><Price cents={product.compareAtCents} /></s>}
+            {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
           </div>
           <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : ` · Envío gratis desde ${formatEUR(SHIPPING.freeFromCents).replace(",00", "")}`)}</p>
 
@@ -61,11 +62,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <p className="kiona pack-title">ESTE PACK INCLUYE</p>
               <ul>
                 {product.includes.map((i) => (
-                  <li key={i.slug}><a href={`/producto/${i.slug}/`}><img src={i.images[0]} alt="" /><span>{i.name}</span><small>{formatEUR(i.price_cents)}</small></a></li>
+                  <li key={i.slug}><a href={`/producto/${i.slug}/`}><img src={i.images[0]} alt="" /><span>{i.name}</span><small><Price cents={i.price_cents} /></small></a></li>
                 ))}
               </ul>
             </div>
           )}
+          <CurrencyNote eurCents={product.price_cents} />
           {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: product.short_description }} />}
 
           <AddToCart product={product} withQty />

@@ -404,3 +404,12 @@ h1, h2, h3 { font-family: var(--heading); font-weight: 400; line-height: 1.15; m
   .cart-name a { font-size: 1.1rem; }
 }
 @media (prefers-reduced-motion: reduce) { .product-card:hover { transform: none; } }
+
+/* Selector de moneda */
+.currency-select { position: relative; display: inline-flex; align-items: center; }
+.currency-select select { appearance: none; -webkit-appearance: none; font: inherit; font-size: .85rem; font-weight: 500; color: var(--verde); background: var(--white); border: 1px solid var(--beige); border-radius: 99px; padding: 7px 28px 7px 12px; cursor: pointer; min-height: 36px; }
+.currency-select select:hover { border-color: var(--verde); }
+.currency-select svg { position: absolute; right: 11px; pointer-events: none; color: var(--verde); }
+.currency-note { font-size: .82rem; color: var(--gris); background: var(--white); border-left: 3px solid var(--beige); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
+.cart-summary .currency-note { display: block; background: var(--base); margin: 12px 0 0; }
+@media (max-width: 760px) { .currency-select select { font-size: .8rem; padding: 6px 24px 6px 10px; } .header-actions { gap: 6px; } }

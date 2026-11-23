@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING } from '@/lib/config';
+import { useCurrency, CurrencyNote } from '@/components/currency';
 
 export default function Carrito() {
   const { items, setQty, remove, subtotal } = useCart();
+  const { format: money } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [accept, setAccept] = useState(false);
@@ -66,7 +68,7 @@ export default function Carrito() {
       <div className="cart-main">
       {SHIPPING.freeFromCents > 0 && (
         <div className="ship-progress">
-          <p>{free ? <><strong>¡Tienes envío gratis!</strong></> : <>Te faltan <strong>{formatEUR(SHIPPING.freeFromCents - subtotal)}</strong> para el envío gratis</>}</p>
+          <p>{free ? <><strong>¡Tienes envío gratis!</strong></> : <>Te faltan <strong>{money(SHIPPING.freeFromCents - subtotal)}</strong> para el envío gratis</>}</p>
           <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round((subtotal / SHIPPING.freeFromCents) * 100))} aria-label="Progreso hacia el envío gratis"><span style={{ width: `${Math.min(100, (subtotal / SHIPPING.freeFromCents) * 100)}%` }} /></div>
         </div>
       )}
@@ -74,13 +76,13 @@ export default function Carrito() {
         {items.map((i) => (
           <li key={i.slug}>
             <img src={i.image} alt="" />
-            <div className="cart-name"><a href={`/producto/${i.slug}/`}>{i.name}</a><span>{formatEUR(i.price_cents)}</span></div>
+            <div className="cart-name"><a href={`/producto/${i.slug}/`}>{i.name}</a><span>{money(i.price_cents)}</span></div>
             <div className="cart-qty">
               <button onClick={() => setQty(i.slug, i.qty - 1)} aria-label={`Quitar una unidad de ${i.name}`}>−</button>
               <span aria-live="polite">{i.qty}</span>
               <button onClick={() => setQty(i.slug, i.qty + 1)} aria-label={`Añadir una unidad de ${i.name}`}>+</button>
             </div>
-            <strong className="cart-line">{formatEUR(i.price_cents * i.qty)}</strong>
+            <strong className="cart-line">{money(i.price_cents * i.qty)}</strong>
             <button className="cart-remove" onClick={() => remove(i.slug)} aria-label={`Eliminar ${i.name}`}>✕</button>
           </li>
         ))}
@@ -90,9 +92,10 @@ export default function Carrito() {
       <aside className="cart-side">
       <div className="cart-summary">
         <h2 className="kiona summary-title">RESUMEN</h2>
-        <p><span>Subtotal</span><span>{formatEUR(subtotal)}</span></p>
-        <p><span>Envío (España)</span><span>{shipping === 0 ? 'Gratis' : formatEUR(shipping)}</span></p>
-        <p className="total"><span>Total</span><span>{formatEUR(subtotal + shipping)}</span></p>
+        <p><span>Subtotal</span><span>{money(subtotal)}</span></p>
+        <p><span>Envío (España)</span><span>{shipping === 0 ? 'Gratis' : money(shipping)}</span></p>
+        <p className="total"><span>Total</span><span>{money(subtotal + shipping)}</span></p>
+        <CurrencyNote eurCents={subtotal + shipping} />
         <p className="tax-note">IVA incluido. Entrega en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables.</p>
       </div>
 

@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import WhatsApp from '@/components/WhatsApp';
 import CookieBanner from '@/components/CookieBanner';
 import { CartProvider } from '@/components/cart';
+import { CurrencyProvider } from '@/components/currency';
 import { media } from '@/lib/config';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Inter:wght@300..700&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <CurrencyProvider>
         <CartProvider>
           <Header />
           <main>{children}</main>
@@ -33,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WhatsApp />
           <CookieBanner />
         </CartProvider>
+        </CurrencyProvider>
       </body>
     </html>
   );
