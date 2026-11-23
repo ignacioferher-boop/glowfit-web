@@ -1,11 +1,12 @@
 import { getProducts } from '@/lib/data';
 import { media } from '@/lib/config';
 import ProductCard from '@/components/ProductCard';
+import { enrich } from '@/lib/shop';
 
 export const revalidate = 300;
 
 export default async function Home() {
-  const products = await getProducts();
+  const products = enrich(await getProducts());
   return (
     <>
       <section className="hero" style={{ backgroundImage: `url(${media('2026/05/FONDO-COLOR-scaled.png')})` }}>

@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getProduct, getProducts } from '@/lib/data';
-import { formatEUR } from '@/lib/config';
+import { getProducts } from '@/lib/data';
+import { formatEUR, SHIPPING } from '@/lib/config';
+import { enrich } from '@/lib/shop';
 import Gallery from '@/components/Gallery';
 import AddToCart from '@/components/AddToCart';
 import ProductCard from '@/components/ProductCard';
+import TrustBar from '@/components/TrustBar';
 
 export const revalidate = 300;
 
@@ -13,43 +15,88 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const p = await getProduct((await params).slug);
+  const { slug } = await params;
+  const p = enrich(await getProducts()).find((x) => x.slug === slug);
   if (!p) return {};
-  const desc = (p.short_description || p.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 155);
+  const desc = (p.short_description || p.tagline || p.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 155);
   return { title: p.name, description: desc, openGraph: { images: p.images.slice(0, 1) } };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const all = enrich(await getProducts());
+  const product = all.find((p) => p.slug === slug);
   if (!product) notFound();
-  const related = (await getProducts()).filter((p) => p.slug !== slug && p.category === product.category).slice(0, 3);
-  const cat = product.category ? product.category.charAt(0) + product.category.slice(1).toLowerCase() : null;
+  const related = [...all.filter((p) => p.slug !== slug && p.category === product.category), ...all.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
+  const save = product.compareAtCents ? product.compareAtCents - product.price_cents : 0;
+  const isPack = product.includes.length > 0;
+  const longDesc = product.description && product.description !== product.short_description && !isPack ? product.description : null;
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Product', name: product.name, image: product.images,
+    description: product.tagline ?? undefined, brand: { '@type': 'Brand', name: 'Glowfit' },
+    offers: { '@type': 'Offer', priceCurrency: 'EUR', price: (product.price_cents / 100).toFixed(2), availability: 'https://schema.org/InStock' },
+  };
   return (
     <section className="page-section product-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="breadcrumb" aria-label="Migas de pan">
-        <a href="/">Inicio</a> / {cat && <><a href={`/productos/?cat=${encodeURIComponent(product.category!)}`}>{cat}</a> / </>}<span>{product.name}</span>
+        <a href="/">Inicio</a><span aria-hidden="true">/</span><a href="/productos/">Productos</a>
+        {product.catLabel && <><span aria-hidden="true">/</span><a href={`/productos/?cat=${encodeURIComponent(product.category!)}`}>{product.catLabel}</a></>}
       </nav>
       <div className="product-layout">
-        <Gallery images={product.images} name={product.name} />
+        <div className="product-media"><Gallery images={product.images} name={product.name} /></div>
         <div className="product-info">
+          {product.catLabel && <p className="kiona card-cat">{product.catLabel.toUpperCase()}</p>}
           <h1>{product.name}</h1>
-          <p className="price big">{formatEUR(product.price_cents)}</p>
-          <p className="tax-note">IVA incluido</p>
-          {product.short_description && <div className="rich" dangerouslySetInnerHTML={{ __html: product.short_description }} />}
+          {product.tagline && <p className="product-tagline">{product.tagline}</p>}
+          <div className="price-row">
+            <span className="price big">{formatEUR(product.price_cents)}</span>
+            {product.compareAtCents && <s>{formatEUR(product.compareAtCents)}</s>}
+            {save > 0 && <span className="card-badge save static">Ahorras {formatEUR(save)}</span>}
+          </div>
+          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : ` · Envío gratis desde ${formatEUR(SHIPPING.freeFromCents)}`)}</p>
+
+          {isPack && (
+            <div className="pack-includes">
+              <p className="kiona pack-title">ESTE PACK INCLUYE</p>
+              <ul>
+                {product.includes.map((i) => (
+                  <li key={i.slug}><a href={`/producto/${i.slug}/`}><img src={i.images[0]} alt="" loading="lazy" /><span>{i.name}</span><small>{formatEUR(i.price_cents)}</small></a></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: product.short_description }} />}
+
           <AddToCart product={product} withQty />
-          {cat && <p className="meta">Categoría: {cat}</p>}
+          <TrustBar variant="list" />
+
+          <div className="product-details">
+            {longDesc && (
+              <details open>
+                <summary>Descripción</summary>
+                <div className="rich" dangerouslySetInnerHTML={{ __html: longDesc }} />
+              </details>
+            )}
+            <details>
+              <summary>Envíos y entregas</summary>
+              <p>Enviamos a toda España en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables. El envío cuesta {formatEUR(SHIPPING.standardCents)}{SHIPPING.freeFromCents > 0 && <> y es gratis a partir de {formatEUR(SHIPPING.freeFromCents)}</>}. <a href="/envios-y-entregas/">Más información</a></p>
+            </details>
+            <details>
+              <summary>Devoluciones</summary>
+              <p>Tienes 14 días desde que lo recibes para devolver productos precintados y sin abrir. <a href="/reembolso_devoluciones/">Ver cómo devolver</a></p>
+            </details>
+            <details>
+              <summary>Uso responsable</summary>
+              <p>Complemento alimenticio. No sustituye una dieta variada y equilibrada ni un estilo de vida saludable. No superes la dosis diaria recomendada y mantenlo fuera del alcance de los niños. Revisa ingredientes y alérgenos en las imágenes del producto.</p>
+            </details>
+          </div>
         </div>
       </div>
-      {product.description && (
-        <div className="product-description">
-          <h2>Descripción</h2>
-          <div className="rich" dangerouslySetInnerHTML={{ __html: product.description }} />
-        </div>
-      )}
       {related.length > 0 && (
         <div className="related">
-          <h2 className="section-title small">PRODUCTOS RELACIONADOS</h2>
+          <p className="kiona section-eyebrow center">COMPLETA TU RUTINA</p>
+          <h2 className="section-title small">TAMBIÉN TE PUEDE GUSTAR</h2>
           <ul className="product-grid">{related.map((p) => <ProductCard key={p.slug} product={p} />)}</ul>
         </div>
       )}

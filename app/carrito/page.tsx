@@ -47,16 +47,29 @@ export default function Carrito() {
 
   if (items.length === 0)
     return (
-      <section className="page-section narrow center">
+      <section className="page-section narrow center cart-empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17" cy="20" r="1.3" /></svg>
         <h1 className="section-title">TU CARRITO</h1>
-        <p>Tu carrito de la compra está vacío.</p>
-        <a className="btn" href="/productos/">Volver a la tienda</a>
+        <p className="script mid-script">Todavía está vacío</p>
+        <p>Descubre nuestras fórmulas y empieza tu rutina Glowfit.</p>
+        <a className="btn" href="/productos/">Ver productos</a>
       </section>
     );
 
   return (
-    <section className="page-section narrow">
+    <section className="page-section cart-page">
       <h1 className="section-title">TU CARRITO</h1>
+      <ol className="steps" aria-label="Pasos de la compra">
+        <li className="on">Carrito</li><li className="on">Tus datos</li><li>Pago seguro</li>
+      </ol>
+      <div className="cart-layout">
+      <div className="cart-main">
+      {SHIPPING.freeFromCents > 0 && (
+        <div className="ship-progress">
+          <p>{free ? <><strong>¡Tienes envío gratis!</strong></> : <>Te faltan <strong>{formatEUR(SHIPPING.freeFromCents - subtotal)}</strong> para el envío gratis</>}</p>
+          <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round((subtotal / SHIPPING.freeFromCents) * 100))} aria-label="Progreso hacia el envío gratis"><span style={{ width: `${Math.min(100, (subtotal / SHIPPING.freeFromCents) * 100)}%` }} /></div>
+        </div>
+      )}
       <ul className="cart-list">
         {items.map((i) => (
           <li key={i.slug}>
@@ -72,12 +85,13 @@ export default function Carrito() {
           </li>
         ))}
       </ul>
+      <a className="keep-shopping" href="/productos/">← Seguir comprando</a>
+      </div>
+      <aside className="cart-side">
       <div className="cart-summary">
+        <h2 className="kiona summary-title">RESUMEN</h2>
         <p><span>Subtotal</span><span>{formatEUR(subtotal)}</span></p>
         <p><span>Envío (España)</span><span>{shipping === 0 ? 'Gratis' : formatEUR(shipping)}</span></p>
-        {!free && SHIPPING.freeFromCents > 0 && (
-          <p className="hint">Te faltan {formatEUR(SHIPPING.freeFromCents - subtotal)} para el envío gratis.</p>
-        )}
         <p className="total"><span>Total</span><span>{formatEUR(subtotal + shipping)}</span></p>
         <p className="tax-note">IVA incluido. Entrega en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables.</p>
       </div>
@@ -102,8 +116,10 @@ export default function Carrito() {
         <button className="btn full" type="submit" disabled={loading}>
           {loading ? 'Abriendo pago seguro…' : 'Continuar al pago'}
         </button>
-        <p className="secure">Pago seguro con tarjeta, Apple Pay, Google Pay o PayPal</p>
+        <p className="secure"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3" /></svg> Pago seguro con tarjeta, Apple Pay, Google Pay o PayPal</p>
       </form>
+      </aside>
+      </div>
     </section>
   );
 }
