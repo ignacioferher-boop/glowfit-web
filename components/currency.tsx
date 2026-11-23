@@ -17,9 +17,14 @@ const KEY = 'glowfit-currency';
 type Ctx = { currency: string; setCurrency: (c: string) => void; rates: Record<string, number>; updated: string | null; format: (eurCents: number) => string };
 const C = createContext<Ctx | null>(null);
 
-const fmt = (amount: number, code: string) =>
-  new Intl.NumberFormat('es-ES', { style: 'currency', currency: code, currencyDisplay: code === 'EUR' ? 'symbol' : 'narrowSymbol', maximumFractionDigits: NO_DECIMALS.has(code) ? 0 : 2, minimumFractionDigits: NO_DECIMALS.has(code) ? 0 : 2 }).format(amount)
-    + (code === 'EUR' ? '' : ` ${code}`);
+const SYMBOL: Record<string, [string, boolean]> = { USD: ['US$', false], PEN: ['S/', false], ARS: ['$', true], BOB: ['Bs', false], MXN: ['$', true], COP: ['$', true], CLP: ['$', true] };
+const fmt = (amount: number, code: string) => {
+  if (code === 'EUR') return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount);
+  const d = NO_DECIMALS.has(code) ? 0 : 2;
+  const n = new Intl.NumberFormat('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' } as Intl.NumberFormatOptions).format(amount);
+  const [sym, suffix] = SYMBOL[code] ?? [code, false];
+  return `${sym} ${n}${suffix ? ` ${code}` : ''}`;
+};
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCur] = useState('EUR');
