@@ -21,6 +21,7 @@ export default function Header() {
         </nav>
         <div className="header-actions">
           <CurrencySelect />
+          <a href="/mi-pedido/" className="account-link" aria-label="Mi pedido" title="Mi pedido"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg><span>Mi pedido</span></a>
           <CartIcon />
           <button className="menu-toggle" aria-expanded={open} aria-label="Abrir menú" onClick={() => setOpen(!open)}>
             <span /><span />
