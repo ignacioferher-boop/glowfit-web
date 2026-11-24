@@ -17,7 +17,7 @@ export default function Preview() {
     const onMsg = (e: MessageEvent<Msg>) => {
       if (e.origin !== window.location.origin || !e.data || typeof e.data !== 'object') return;
       if (e.data.type === 'draft') { setHome(e.data.home); setProducts(e.data.products); setSelected(e.data.selected); }
-      if (e.data.type === 'scrollTo') root.current?.querySelector(`[data-sid="${CSS.escape(e.data.id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (e.data.type === 'scrollTo') { const el = root.current?.querySelector<HTMLElement>(`[data-sid="${CSS.escape(e.data.id)}"]`); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' }); }
     };
     window.addEventListener('message', onMsg);
     window.parent?.postMessage({ type: 'ready' }, window.location.origin);

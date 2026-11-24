@@ -46,6 +46,14 @@ export default function SiteEditor() {
   const [versions, setVersions] = useState<{ id: number; value: HomeContent; created_at: string; created_by: string | null }[] | null>(null);
   const [dragI, setDragI] = useState<number | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(() => setScale(Math.min(1, el.clientWidth / 1280)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
   const ready = useRef(false);
 
   useEffect(() => {
@@ -210,8 +218,9 @@ export default function SiteEditor() {
             </div>
             <small className="ad-muted">Vista previa · los cambios aún no son públicos hasta que pulses Publicar</small>
           </div>
-          <div className={`ad-ed-frame ${device}`}>
-            <iframe ref={frame} src="/vista-previa/" title="Vista previa de la web" onLoad={() => { ready.current = true; send(); }} />
+          <div className={`ad-ed-frame ${device}`} ref={box}>
+            <iframe ref={frame} src="/vista-previa/" title="Vista previa de la web" onLoad={() => { ready.current = true; send(); }}
+              style={device === 'desktop' && scale >= 0.4 ? { width: 1280, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: '0 0' } : undefined} />
           </div>
         </div>
       </div>

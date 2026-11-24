@@ -515,4 +515,4 @@ a.announce:hover { text-decoration: underline; }
 .hs-preview .hs-edit:hover { outline-color: rgba(216,97,60,.45); }
 .hs-preview .hs-edit.selected { outline: 3px solid var(--naranja); }
 .hs-preview .hs-edit.selected::before { content: attr(data-label); position: absolute; top: 0; left: 0; z-index: 5; background: var(--naranja); color: #fff; font: 600 12px/1 var(--body); padding: 6px 10px; border-radius: 0 0 8px 0; }
-body:has(.hs-preview) > * > * > .announce, body:has(.hs-preview) .announce:not(.draft) { display: none; }
+body:has(.hs-preview) .announce:not(.draft), body:has(.hs-preview) .cookie-banner, body:has(.hs-preview) .whatsapp { display: none; }
