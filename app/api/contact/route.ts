@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabasePublic } from '@/lib/data';
+import { contactEmail, sendEmail } from '@/lib/email';
+import { LEGAL } from '@/lib/legal';
 export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   if (b.website) return NextResponse.json({ ok: true }); // trampa anti-spam
@@ -8,5 +10,7 @@ export async function POST(req: Request) {
   if (!row.name || !row.email.includes('@') || !row.message) return NextResponse.json({ error: 'Faltan datos' }, { status: 400 });
   const { error } = await supabasePublic!.from('contact_messages').insert(row);
   if (error) { console.error(error); return NextResponse.json({ error: 'db' }, { status: 500 }); }
+  // Aviso por email al buzón de contacto (si Resend está configurado)
+  await sendEmail(LEGAL.email, contactEmail(row), row.email).catch((e) => console.error('contact mail', e));
   return NextResponse.json({ ok: true });
 }

@@ -52,6 +52,15 @@ export function shopEmail(o: OrderMail) {
   };
 }
 
+export function contactEmail(c: { name: string; email: string; phone: string; message: string }) {
+  return {
+    subject: `Mensaje de contacto · ${c.name}`,
+    html: layout('Nuevo mensaje de contacto', `<p style="font-size:15px;line-height:1.6"><strong>${esc(c.name)}</strong><br>${esc(c.email)}${c.phone ? `<br>${esc(c.phone)}` : ''}</p>
+<p style="font-size:15px;line-height:1.6;white-space:pre-wrap;background:#f8f2ea;border-radius:12px;padding:16px">${esc(c.message)}</p>
+<p style="font-size:13px;color:#636363">Responde a este email para contestar directamente.</p>`),
+  };
+}
+
 export async function sendEmail(to: string, msg: { subject: string; html: string }, replyTo?: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM; // ej. "Glowfit <pedidos@tudominio.es>"
