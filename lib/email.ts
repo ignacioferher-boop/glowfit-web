@@ -152,6 +152,20 @@ ${label('Mensaje')}
   };
 }
 
+export function loginCodeEmail(code: string) {
+  return {
+    subject: `${code} es tu código de acceso a Glowfit`,
+    html: layout({
+      preheader: `Tu código para entrar en tu cuenta Glowfit es ${code}. Caduca en 10 minutos.`,
+      eyebrow: 'Tu cuenta',
+      title: 'Tu código de acceso',
+      intro: 'Escríbelo en la web para entrar en tu cuenta y ver tus pedidos.',
+      body: `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:8px auto 20px"><tr><td bgcolor="${C.cream}" style="background:${C.cream};border-radius:16px;padding:18px 28px;font-family:${SERIF};font-size:38px;letter-spacing:10px;color:${C.green};text-align:center">${code}</td></tr></table>
+<p style="margin:0;text-align:center;font-size:13px;color:${C.muted}">Caduca en 10 minutos. Si no has sido tú, ignora este email: nadie podrá entrar sin este código.</p>`,
+    }),
+  };
+}
+
 export async function sendEmail(to: string, msg: { subject: string; html: string }, replyTo?: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM; // ej. "Glowfit <pedidos@tudominio.es>"

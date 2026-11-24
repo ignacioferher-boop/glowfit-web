@@ -441,3 +441,37 @@ h1, h2, h3 { font-family: var(--heading); font-weight: 400; line-height: 1.15; m
 .track-items li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .95rem; }
 .track-items .muted { color: var(--gris); }
 .track-items .total { font-family: var(--heading); font-size: 1.3rem; border-top: 1px solid var(--accent); margin-top: 6px; padding-top: 10px; }
+
+/* ===== Mi cuenta ===== */
+.acc-wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.acc-title{font-family:var(--font-serif,'Cardo',serif);font-weight:400;font-size:1.6rem;margin:0 0 6px;color:var(--green,#464e34)}
+.acc-lead{margin-top:0}
+.acc-code{font-size:1.8rem!important;letter-spacing:.6em;text-align:center;font-variant-numeric:tabular-nums}
+.acc-loading{display:flex;justify-content:center;padding:48px}
+.acc-spinner{width:28px;height:28px;border-radius:50%;border:3px solid #e6dccd;border-top-color:#464e34;animation:accspin .8s linear infinite}
+@keyframes accspin{to{transform:rotate(360deg)}}
+.acc-profile{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;max-width:none!important}
+.acc-email{font-size:1.05rem;color:#464e34;word-break:break-all}
+.acc-stats{display:flex;gap:18px;color:#636363;font-size:.95rem}
+.acc-stats b{color:#464e34;font-size:1.15rem;margin-right:4px}
+.acc-h{font-family:var(--font-serif,'Cardo',serif);font-weight:400;font-size:1.35rem;color:#464e34;margin:12px 0 0}
+.acc-empty{text-align:center;max-width:none!important}
+.acc-order{padding:0!important;max-width:none!important;overflow:hidden;animation:accin .35s ease both}
+@keyframes accin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.acc-order{animation:none}.acc-spinner{animation-duration:2s}}
+.acc-order-head{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:14px;padding:18px 22px;cursor:pointer}
+.acc-order-head:focus-visible{outline:2px solid #889765;outline-offset:-2px;border-radius:12px}
+.acc-order-head strong{display:block;color:#464e34;font-size:1.05rem}
+.acc-order-head small{color:#7a7a6e;font-size:.85rem}
+.acc-total{font-weight:600;color:#464e34;white-space:nowrap}
+.acc-chev{color:#889765;transition:transform .2s;font-size:1.1rem}
+.acc-order.open .acc-chev{transform:rotate(180deg)}
+.acc-order-body{padding:0 22px 20px;border-top:1px solid #efe7db}
+.acc-addr{margin-top:12px}
+.acc-badge{font-size:.75rem;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:#f1ece2;color:#636363;white-space:nowrap}
+.acc-badge.s-nuevo{background:#eef0e6;color:#5d6b3e}
+.acc-badge.s-preparando{background:#fbf0dc;color:#9a6a12}
+.acc-badge.s-enviado{background:#e5eef6;color:#2f5f86}
+.acc-badge.s-entregado{background:#e3efe4;color:#2f6b3a}
+.acc-badge.s-cancelado{background:#f8e5e1;color:#a2412c}
+@media (max-width:560px){.acc-order-head{grid-template-columns:1fr auto;grid-template-areas:"a c" "b d";padding:16px}.acc-order-head>div{grid-area:a}.acc-badge{grid-area:b;justify-self:start}.acc-total{grid-area:c}.acc-chev{grid-area:d;justify-self:end}}
