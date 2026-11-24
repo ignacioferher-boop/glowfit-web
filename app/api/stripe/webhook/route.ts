@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
-import { customerEmail, sendEmail, shopEmail } from '@/lib/email';
+import { customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
+import { getInventorySettings } from '@/lib/settings';
 
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_SECRET_KEY;
@@ -53,7 +54,19 @@ export async function POST(req: Request) {
       const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
       if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
       if (ok) await supabasePublic.rpc('mark_order_emailed', { p_secret: orderSecret, p_session: full.id });
+      // Aviso de stock bajo a la tienda (una vez por pedido)
+      const inv = await getInventorySettings();
+      if (inv.notify_low_stock && process.env.ORDER_NOTIFY_EMAIL) {
+        const { data: low } = await supabasePublic.from('products').select('name,stock').not('stock', 'is', null).lte('stock', inv.low_stock_threshold).order('stock');
+        if (low?.length) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, lowStockEmail(low as { name: string; stock: number }[], inv.low_stock_threshold));
+      }
     }
+  }
+  // El cliente no pagó a tiempo: libera los botes reservados
+  if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') {
+    const s = event.data.object as Stripe.Checkout.Session;
+    await supabasePublic.rpc('attach_reservation', { p_secret: orderSecret, p_reservation: s.metadata?.reservation || null, p_session: s.id, p_release: true });
+    revalidatePath('/', 'layout');
   }
   return NextResponse.json({ received: true });
 }

@@ -9,12 +9,16 @@ import Orders from '@/components/admin/Orders';
 import Products from '@/components/admin/Products';
 import Customers from '@/components/admin/Customers';
 import Settings from '@/components/admin/Settings';
+import Inventory from '@/components/admin/Inventory';
+import SiteEditor from '@/components/admin/SiteEditor';
 
-type Tab = 'home' | 'orders' | 'products' | 'customers' | 'settings';
+type Tab = 'home' | 'orders' | 'products' | 'inventory' | 'editor' | 'customers' | 'settings';
 const NAV: { k: Tab; l: string; i: string }[] = [
   { k: 'home', l: 'Resumen', i: 'home' },
   { k: 'orders', l: 'Pedidos', i: 'orders' },
   { k: 'products', l: 'Productos', i: 'box' },
+  { k: 'inventory', l: 'Inventario', i: 'stock' },
+  { k: 'editor', l: 'Editar la web', i: 'layout' },
   { k: 'customers', l: 'Clientes', i: 'users' },
   { k: 'settings', l: 'Ajustes', i: 'gear' },
 ];
@@ -144,6 +148,8 @@ function App({ email }: { email: string }) {
           {tab === 'home' && <Dashboard orders={orders} openOrder={(id) => { setFocusOrder(id); go('orders'); }} goOrders={() => go('orders')} />}
           {tab === 'orders' && <Orders orders={orders} reload={loadOrders} focusId={focusOrder} clearFocus={() => setFocusOrder(null)} />}
           {tab === 'products' && <Products />}
+          {tab === 'inventory' && <Inventory />}
+          {tab === 'editor' && <SiteEditor />}
           {tab === 'customers' && <Customers />}
           {tab === 'settings' && <Settings email={email} />}
         </div>

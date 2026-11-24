@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsApp from '@/components/WhatsApp';
 import CookieBanner from '@/components/CookieBanner';
+import Announcement from '@/components/Announcement';
 import { CartProvider } from '@/components/cart';
 import { CurrencyProvider } from '@/components/currency';
 import { media } from '@/lib/config';
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <CurrencyProvider>
         <CartProvider>
+          <Announcement />
           <Header />
           <main>{children}</main>
           <Footer />

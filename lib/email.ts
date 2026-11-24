@@ -152,6 +152,22 @@ ${label('Mensaje')}
   };
 }
 
+export function lowStockEmail(list: { name: string; stock: number }[], threshold: number) {
+  const rows = list.map((p) => `<tr><td style="padding:12px 0;border-bottom:1px solid ${C.line};font-size:15px;color:${C.text}">${esc(p.name)}</td><td style="padding:12px 0;border-bottom:1px solid ${C.line};text-align:right;font-weight:700;color:${p.stock <= 0 ? '#b23a2a' : '#d8613c'}">${p.stock <= 0 ? 'Agotado' : `${p.stock} ${p.stock === 1 ? 'bote' : 'botes'}`}</td></tr>`).join('');
+  return {
+    subject: list.some((p) => p.stock <= 0) ? '⚠️ Producto agotado en Glowfit' : '⚠️ Quedan pocas unidades en Glowfit',
+    html: layout({
+      preheader: list.map((p) => `${p.name}: ${p.stock}`).join(' · '),
+      eyebrow: 'Inventario',
+      title: 'Hay que reponer',
+      intro: `Tras la última venta, estos productos tienen ${threshold} unidades o menos. Los packs que los llevan también se agotan cuando llegan a 0.`,
+      body: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">${rows}</table>
+<p style="margin:0;text-align:center">${button(PANEL, 'Abrir inventario')}</p>`,
+      footerNote: 'Cuando recibas mercancía, añádela en el panel → Inventario → «Entrada».',
+    }),
+  };
+}
+
 export function loginCodeEmail(code: string) {
   return {
     subject: `${code} es tu código de acceso a Glowfit`,

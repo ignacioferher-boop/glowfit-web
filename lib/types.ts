@@ -11,5 +11,7 @@ export type Product = {
   tagline?: string | null;
   /** Unidades que se pueden vender. null = sin control de stock. En packs, lo que permiten sus productos. */
   available?: number | null;
+  /** Aviso listo para mostrar: Agotado / ¡Quedan solo 3! / ¡Últimas unidades! */
+  stock_label?: string | null;
 };
 export type Page = { slug: string; title: string; content: string };

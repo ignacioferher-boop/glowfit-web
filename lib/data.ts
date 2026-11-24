@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Page, Product } from './types';
 import { SEED_PRODUCTS } from './seed';
+import { getInventorySettings, stockLabel } from './settings';
 
 // Valores públicos (no secretos) del proyecto Supabase glowfit; se pueden sobrescribir con variables de entorno.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vwyvmqsxiazcrhjdiucm.supabase.co';
@@ -26,9 +27,12 @@ export async function getProducts(): Promise<Product[]> {
     return SEED_PRODUCTS;
   }
   const products = data as unknown as Product[];
-  const { data: levels } = await supabasePublic.rpc('stock_levels');
+  const [{ data: levels }, inv] = await Promise.all([supabasePublic.rpc('stock_levels'), getInventorySettings()]);
   const avail = new Map(((levels ?? []) as { slug: string; available: number | null }[]).map((l) => [l.slug, l.available]));
-  return products.map((p) => ({ ...p, available: avail.has(p.slug) ? avail.get(p.slug)! : null }));
+  return products.map((p) => {
+    const available = avail.has(p.slug) ? avail.get(p.slug)! : null;
+    return { ...p, available, stock_label: stockLabel(available, inv) };
+  });
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {

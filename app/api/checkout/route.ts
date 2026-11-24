@@ -4,6 +4,7 @@ import { getProducts, supabasePublic } from '@/lib/data';
 import { LEGAL } from '@/lib/legal';
 import { SHIPPING } from '@/lib/config';
 import { checkStock } from '@/lib/stock';
+import { getInventorySettings } from '@/lib/settings';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -46,8 +47,31 @@ export async function POST(req: Request) {
   const free = SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents;
   const site = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
-  const session = await stripe.checkout.sessions.create({
+  // Reserva los botes durante el pago para que nadie más se los lleve.
+  // Si el cliente no paga a tiempo, la reserva caduca sola y el stock vuelve a estar disponible.
+  const orderSecret = process.env.ORDER_SECRET;
+  const inv = await getInventorySettings();
+  const minutes = Math.max(30, Math.min(1440, inv.reserve_minutes || 30));
+  let reservation: string | null = null;
+  if (orderSecret) {
+    const { data: r, error: rErr } = await supabasePublic!.rpc('reserve_stock', { p_secret: orderSecret, p_items: lines.map(({ p, qty }) => ({ slug: p.slug, qty })), p_minutes: minutes });
+    if (rErr) console.error('reserve_stock', rErr);
+    const res = r as { ok: boolean; reservation?: string; product?: string; left?: number; error?: string } | null;
+    if (res && !res.ok) {
+      const msg = res.error || (res.left === 0
+        ? `Se nos ha agotado ${res.product}. Quítalo del carrito para continuar.`
+        : `Solo nos quedan ${res.left} ${res.left === 1 ? 'bote' : 'botes'} de ${res.product}. Baja la cantidad para continuar.`);
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
+    reservation = res?.reservation ?? null;
+  }
+  const release = () => reservation && orderSecret ? supabasePublic!.rpc('attach_reservation', { p_secret: orderSecret, p_reservation: reservation, p_session: null, p_release: true }) : null;
+
+  let session: Stripe.Checkout.Session;
+  try {
+  session = await stripe.checkout.sessions.create({
     mode: 'payment',
+    expires_at: Math.floor(Date.now() / 1000) + minutes * 60,
     locale: 'es',
     line_items: lines.map(({ p, qty }) => ({
       quantity: qty,
@@ -67,10 +91,16 @@ export async function POST(req: Request) {
         delivery_estimate: { minimum: { unit: 'business_day', value: SHIPPING.minDays }, maximum: { unit: 'business_day', value: SHIPPING.maxDays } },
       },
     }],
-    metadata: { items: JSON.stringify(lines.map(({ p, qty }) => ({ slug: p.slug, qty }))), name, phone, accepts_marketing: String(c.accepts_marketing !== false), terms_version: LEGAL.termsVersion },
+    metadata: { reservation: reservation ?? '', items: JSON.stringify(lines.map(({ p, qty }) => ({ slug: p.slug, qty }))), name, phone, accepts_marketing: String(c.accepts_marketing !== false), terms_version: LEGAL.termsVersion },
     success_url: `${site}/checkout/exito/?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${site}/carrito/`,
   });
+  } catch (e) {
+    console.error('Stripe checkout', e);
+    await release();
+    return NextResponse.json({ error: 'No se pudo iniciar el pago. Inténtalo de nuevo en un momento.' }, { status: 502 });
+  }
+  if (reservation && orderSecret) await supabasePublic!.rpc('attach_reservation', { p_secret: orderSecret, p_reservation: reservation, p_session: session.id });
 
   return NextResponse.json({ url: session.url });
 }

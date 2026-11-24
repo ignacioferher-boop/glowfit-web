@@ -11,7 +11,7 @@ export default function AddToCart({ product, withQty = false }: { product: Produ
   const avail = product.available ?? null;
   const soldOut = avail !== null && avail <= 0;
   const max = Math.max(1, Math.min(20, avail ?? 20));
-  const low = avail !== null && avail > 0 && avail <= 5;
+  const low = !soldOut && !!product.stock_label;
   const item = { slug: product.slug, name: product.name, price_cents: product.price_cents, image: product.images[0] ?? '' };
   return (
     <div className={`add-to-cart${withQty ? ' with-qty' : ''}`}>
@@ -29,7 +29,7 @@ export default function AddToCart({ product, withQty = false }: { product: Produ
           {done ? '✓ Añadido' : 'Añadir al carrito'}
         </button>
       )}
-      {withQty && low && <p className="stock-low">¡Quedan solo {avail}!</p>}
+      {withQty && low && <p className="stock-low">{product.stock_label}</p>}
       {withQty && soldOut && <p className="stock-out">Lo estamos reponiendo. Escríbenos por WhatsApp y te avisamos cuando vuelva.</p>}
     </div>
   );
