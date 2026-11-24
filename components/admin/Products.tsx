@@ -7,6 +7,30 @@ const htmlToText = (h: string | null) => (h ?? '').replace(/<br\s*\/?>/gi, '\n')
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const textToHtml = (t: string) => (t.trim() ? t.trim().split(/\n{2,}/).map((b) => `<p>${esc(b).replace(/\n/g, '<br />')}</p>`).join('') : null);
 const slugify = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+type Comp = { pack_id: string; component_id: string; qty: number };
+
+/** Lo que se puede vender: producto suelto = su stock; pack = lo que permiten sus productos. null = sin control. */
+function availableOf(p: Product, items: Product[], comps: Comp[]): number | null {
+  const parts = comps.filter((c) => c.pack_id === p.id);
+  if (!parts.length) return p.stock == null ? null : Math.max(0, p.stock);
+  let min: number | null = null;
+  for (const c of parts) {
+    const s = items.find((x) => x.id === c.component_id)?.stock;
+    if (s == null) continue;
+    const n = Math.floor(Math.max(0, s) / c.qty);
+    min = min === null ? n : Math.min(min, n);
+  }
+  return min;
+}
+
+function StockTag({ p, items, comps }: { p: Product; items: Product[]; comps: Comp[] }) {
+  const isPack = comps.some((c) => c.pack_id === p.id);
+  const n = availableOf(p, items, comps);
+  if (n === null) return <small className="ad-muted">Sin control de stock</small>;
+  const tone = n === 0 ? 'out' : n <= 5 ? 'low' : 'ok';
+  return <small className={`ad-stock ${tone}`}>{n === 0 ? 'Agotado' : isPack ? `${n} packs disponibles` : `${n} ${n === 1 ? 'bote' : 'botes'}`}</small>;
+}
+
 const EMPTY: Product = { slug: '', name: '', category: 'Vitaminas', tagline: '', short_description: '', description: '', price_cents: 0, images: [], active: true, sort: 99 };
 
 export default function Products() {
@@ -15,9 +39,14 @@ export default function Products() {
   const [edit, setEdit] = useState<Product | null>(null);
   const [del, setDel] = useState<Product | null>(null);
   const [q, setQ] = useState('');
+  const [comps, setComps] = useState<Comp[]>([]);
   const load = useCallback(async () => {
-    const { data } = await sb().from('products').select('*').order('sort');
+    const [{ data }, { data: c }] = await Promise.all([
+      sb().from('products').select('*').order('sort'),
+      sb().from('product_components').select('pack_id,component_id,qty'),
+    ]);
     setItems((data as Product[]) ?? []);
+    setComps((c as Comp[]) ?? []);
   }, []);
   useEffect(() => { load(); }, [load]);
   const list = useMemo(() => (items ?? []).filter((p) => !q || `${p.name} ${p.category}`.toLowerCase().includes(q.toLowerCase())), [items, q]);
@@ -42,7 +71,7 @@ export default function Products() {
   }
 
   if (!items) return <Skeleton rows={5} h={88} />;
-  if (edit) return <ProductEditor initial={edit} onDone={(saved) => { setEdit(null); if (saved) { toast('Producto guardado. Se verá en la web en unos minutos.'); load(); } }} />;
+  if (edit) return <ProductEditor initial={edit} all={items} comps={comps} onDone={(saved) => { setEdit(null); if (saved) { toast('Producto guardado. Se verá en la web en unos minutos.'); load(); } }} />;
   return (
     <>
       <div className="ad-toolbar ad-rise">
@@ -61,6 +90,7 @@ export default function Products() {
                 <small className="ad-muted">{p.category}</small>
                 <strong>{p.name}</strong>
                 <span className="ad-price">{eur(p.price_cents)}</span>
+                <StockTag p={p} items={items} comps={comps} />
               </div>
               <div className="ad-pfoot">
                 <label className="ad-switch-row"><Switch on={p.active} onChange={(v) => toggle(p, v)} label={`Mostrar ${p.name} en la tienda`} /><span>{p.active ? 'Visible' : 'Oculto'}</span></label>
@@ -87,8 +117,13 @@ export default function Products() {
   );
 }
 
-function ProductEditor({ initial, onDone }: { initial: Product; onDone: (saved: boolean) => void }) {
+function ProductEditor({ initial, all, comps, onDone }: { initial: Product; all: Product[]; comps: Comp[]; onDone: (saved: boolean) => void }) {
   const toast = useToast();
+  const bases = all.filter((x) => x.id !== initial.id && !comps.some((c) => c.pack_id === x.id));
+  const [parts, setParts] = useState<Record<string, number>>(() => Object.fromEntries(comps.filter((c) => c.pack_id === initial.id).map((c) => [c.component_id, c.qty])));
+  const isPackNow = Object.values(parts).some((n) => n > 0);
+  const [track, setTrack] = useState(initial.stock != null);
+  const [stock, setStock] = useState(String(initial.stock ?? 0));
   const [p, setP] = useState<Product>({ ...initial, tagline: initial.tagline ?? '', short_description: htmlToText(initial.short_description), description: htmlToText(initial.description) });
   const [price, setPrice] = useState(initial.price_cents ? (initial.price_cents / 100).toFixed(2).replace('.', ',') : '');
   const [busy, setBusy] = useState(false);
@@ -131,10 +166,17 @@ function ProductEditor({ initial, onDone }: { initial: Product; onDone: (saved: 
     setErrors(err);
     if (Object.keys(err).length) return;
     setBusy(true);
-    const row = { name: p.name.trim(), slug: p.slug || slugify(p.name), category: p.category || null, tagline: p.tagline?.trim() || null, short_description: textToHtml(p.short_description ?? ''), description: textToHtml(p.description ?? ''), price_cents: cents, images: p.images, active: p.active, sort: p.sort };
-    const { error } = isNew ? await sb().from('products').insert(row) : await sb().from('products').update(row).eq('id', p.id!);
+    const row = { name: p.name.trim(), slug: p.slug || slugify(p.name), category: p.category || null, tagline: p.tagline?.trim() || null, short_description: textToHtml(p.short_description ?? ''), description: textToHtml(p.description ?? ''), price_cents: cents, images: p.images, active: p.active, sort: p.sort, stock: isPackNow || !track ? null : Math.max(0, Math.floor(Number(stock) || 0)) };
+    const res = isNew ? await sb().from('products').insert(row).select('id').single() : await sb().from('products').update(row).eq('id', p.id!).select('id').single();
+    if (res.error) { setBusy(false); toast(res.error.message.includes('duplicate') ? 'Ya hay un producto con ese nombre. Cámbialo un poco.' : 'No se pudo guardar', 'err'); return; }
+    const id = (res.data as { id: string }).id;
+    const want = Object.entries(parts).filter(([, n]) => n > 0).map(([component_id, qty]) => ({ pack_id: id, component_id, qty }));
+    const had = comps.filter((c) => c.pack_id === id);
+    const gone = had.filter((c) => !want.some((w) => w.component_id === c.component_id)).map((c) => c.component_id);
+    const r1 = want.length ? await sb().from('product_components').upsert(want) : { error: null };
+    const r2 = gone.length ? await sb().from('product_components').delete().eq('pack_id', id).in('component_id', gone) : { error: null };
     setBusy(false);
-    if (error) { toast(error.message.includes('duplicate') ? 'Ya hay un producto con ese nombre. Cámbialo un poco.' : 'No se pudo guardar', 'err'); return; }
+    if (r1.error || r2.error) { toast('Producto guardado, pero no se pudo guardar qué lleva el pack', 'err'); return; }
     onDone(true);
   }
 
@@ -182,6 +224,33 @@ function ProductEditor({ initial, onDone }: { initial: Product; onDone: (saved: 
             <label className="ad-field"><span>Categoría</span><input value={p.category ?? ''} onChange={(e) => set('category', e.target.value)} list="ad-cats" /><datalist id="ad-cats"><option value="Vitaminas" /><option value="PACKS" /></datalist></label>
             <label className="ad-field"><span>Posición en la tienda</span><input type="number" min={0} value={p.sort} onChange={(e) => set('sort', Number(e.target.value))} /></label>
             <label className="ad-switch-row big"><Switch on={p.active} onChange={(v) => set('active', v)} label="Visible en la tienda" /><span>{p.active ? 'Visible en la tienda' : 'Oculto en la tienda'}</span></label>
+          </section>
+          <section className="ad-card">
+            <h3>Inventario</h3>
+            {isPackNow ? (
+              <p className="ad-muted ad-stock-help">Es un pack: no tiene stock propio. Cada venta gasta botes de los productos que lleva, y se marca <strong>Agotado</strong> en cuanto falte cualquiera de ellos.</p>
+            ) : (
+              <>
+                <label className="ad-switch-row"><Switch on={track} onChange={setTrack} label="Controlar stock" /><span>{track ? 'Controlar stock' : 'Sin control de stock (siempre disponible)'}</span></label>
+                {track && <label className="ad-field"><span>Botes en el almacén</span><input type="number" min={0} inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} /></label>}
+                {track && Number(stock) <= 0 && <small className="ad-stock out">Se mostrará como Agotado</small>}
+              </>
+            )}
+            {bases.length > 0 && (
+              <details className="ad-pack-parts" open={isPackNow}>
+                <summary>{isPackNow ? 'Productos que lleva este pack' : '¿Es un pack? Elige qué lleva'}</summary>
+                {bases.map((b) => (
+                  <label key={b.id} className="ad-part-row">
+                    <span>{b.name}<small className="ad-muted">{b.stock == null ? ' · sin control' : ` · ${b.stock} botes`}</small></span>
+                    <input type="number" min={0} max={9} inputMode="numeric" value={parts[b.id!] ?? 0} onChange={(e) => setParts((x) => ({ ...x, [b.id!]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }))} aria-label={`Botes de ${b.name} en el pack`} />
+                  </label>
+                ))}
+                {isPackNow && (() => {
+                  const n = availableOf({ ...p, id: initial.id ?? '__new' }, all, Object.entries(parts).filter(([, q]) => q > 0).map(([component_id, qty]) => ({ pack_id: initial.id ?? '__new', component_id, qty })));
+                  return <small className={`ad-stock ${n === 0 ? 'out' : n !== null && n <= 5 ? 'low' : 'ok'}`}>{n === null ? 'Sin control de stock' : n === 0 ? 'Ahora mismo: Agotado' : `Ahora mismo se pueden vender ${n}`}</small>;
+                })()}
+              </details>
+            )}
           </section>
           <section className="ad-card">
             <h3>Vista previa</h3>

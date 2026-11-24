@@ -6,11 +6,12 @@ export default function ProductCard({ product }: { product: ShopProduct }) {
   const href = `/producto/${product.slug}/`;
   const save = product.compareAtCents ? product.compareAtCents - product.price_cents : 0;
   return (
-    <li className="product-card">
+    <li className={`product-card${product.available === 0 ? ' is-out' : ''}`}>
       <a href={href} className="product-img" tabIndex={-1} aria-hidden="true">
         <img src={product.images[0]} alt="" loading="lazy" />
-        {save > 0 && <span className="card-badge save">Ahorra <Price cents={save} /></span>}
-        {product.badge && <span className="card-badge">{product.badge}</span>}
+        {product.available === 0 && <span className="card-badge out">Agotado</span>}
+        {product.available !== 0 && save > 0 && <span className="card-badge save">Ahorra <Price cents={save} /></span>}
+        {product.available !== 0 && product.badge && <span className="card-badge">{product.badge}</span>}
       </a>
       <div className="card-body">
         {product.catLabel && <p className="kiona card-cat">{product.catLabel.toUpperCase()}</p>}

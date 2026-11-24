@@ -24,7 +24,7 @@ export type Order = {
 };
 export type Product = {
   id?: string; slug: string; name: string; category: string | null; tagline: string | null; short_description: string | null; description: string | null;
-  price_cents: number; images: string[]; active: boolean; sort: number;
+  price_cents: number; images: string[]; active: boolean; sort: number; stock?: number | null;
 };
 export type Customer = { id: string; created_at: string; name: string; email: string; phone: string; accepts_marketing: boolean };
 

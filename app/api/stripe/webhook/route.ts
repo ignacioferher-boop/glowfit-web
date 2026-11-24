@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
 import { customerEmail, sendEmail, shopEmail } from '@/lib/email';
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       shipping_cents: full.total_details?.amount_shipping ?? 0,
       total_cents: full.amount_total ?? 0,
       accepts_marketing: full.metadata?.accepts_marketing !== 'false',
+      stock_items: (() => { try { return JSON.parse(full.metadata?.items || '[]'); } catch { return []; } })(),
     };
     const { data, error } = await supabasePublic.rpc('record_order', { p_secret: orderSecret, p_order: order });
     if (error) {
@@ -44,6 +46,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'db' }, { status: 500 }); // Stripe reintentará
     }
     const row = Array.isArray(data) ? data[0] : data;
+    if (order.status === 'paid') revalidatePath('/', 'layout'); // refresca el stock visible en la tienda
     // Emails de confirmación (solo una vez y solo si el pago está hecho)
     if (row && !row.email_sent && order.status === 'paid' && order.email) {
       const mail = { order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };

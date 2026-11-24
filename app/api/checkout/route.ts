@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { getProducts, supabasePublic } from '@/lib/data';
 import { LEGAL } from '@/lib/legal';
 import { SHIPPING } from '@/lib/config';
+import { checkStock } from '@/lib/stock';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -20,6 +21,9 @@ export async function POST(req: Request) {
   if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/[^0-9]/g, '').length < 9)
     return NextResponse.json({ error: 'Revisa tu nombre, email y teléfono' }, { status: 400 });
   if (c.accepted_terms !== true) return NextResponse.json({ error: 'Debes aceptar las condiciones de contratación' }, { status: 400 });
+
+  const stockError = await checkStock(requested);
+  if (stockError) return NextResponse.json({ error: stockError }, { status: 409 });
 
   const { error: custErr } = await supabasePublic!.from('customers').insert({
     name, email, phone, accepts_marketing: c.accepts_marketing !== false, terms_version: LEGAL.termsVersion, cart: requested,

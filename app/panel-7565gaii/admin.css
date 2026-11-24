@@ -321,3 +321,17 @@ body:has(.ad-root) { background: #f4efe7; }
 @media (prefers-reduced-motion: reduce) {
   .ad-root *, .ad-root *::before { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Inventario */
+.ad-stock { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; text-transform: none !important; letter-spacing: 0 !important; }
+.ad-stock::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ad-stock.ok { color: var(--ad-olive); }
+.ad-stock.low { color: var(--ad-orange); }
+.ad-stock.out { color: var(--ad-red); }
+.ad-pbody .ad-stock, .ad-pbody .ad-muted { margin-top: 4px; }
+.ad-stock-help { font-size: .86rem; margin-bottom: 8px; }
+.ad-pack-parts { margin-top: 14px; border-top: 1px solid var(--ad-line); padding-top: 12px; }
+.ad-pack-parts summary { cursor: pointer; font-size: .88rem; font-weight: 600; margin-bottom: 8px; }
+.ad-part-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: .9rem; }
+.ad-part-row input { width: 64px; padding: 6px 8px; border: 1px solid var(--ad-line); border-radius: 10px; font: inherit; text-align: center; }
+.ad-pack-parts .ad-stock { margin-top: 8px; }

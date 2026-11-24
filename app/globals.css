@@ -475,3 +475,13 @@ h1, h2, h3 { font-family: var(--heading); font-weight: 400; line-height: 1.15; m
 .acc-badge.s-entregado{background:#e3efe4;color:#2f6b3a}
 .acc-badge.s-cancelado{background:#f8e5e1;color:#a2412c}
 @media (max-width:560px){.acc-order-head{grid-template-columns:1fr auto;grid-template-areas:"a c" "b d";padding:16px}.acc-order-head>div{grid-area:a}.acc-badge{grid-area:b;justify-self:start}.acc-total{grid-area:c}.acc-chev{grid-area:d;justify-self:end}}
+
+/* Inventario */
+.card-badge.out { background: var(--contrast); color: #fff; }
+.product-card.is-out .product-img img { opacity: .55; filter: grayscale(.35); }
+.btn-add.sold-out, .btn-add.sold-out:hover { background: var(--accent); color: var(--gris); cursor: not-allowed; transform: none; box-shadow: none; }
+.add-to-cart .stock-low, .add-to-cart .stock-out { grid-column: 1 / -1; margin: 0; font-size: .9rem; }
+.add-to-cart .stock-low { color: var(--naranja); font-weight: 600; }
+.add-to-cart .stock-out { color: var(--gris); }
+.add-to-cart.with-qty:has(.sold-out) { grid-template-columns: 1fr; }
+.add-to-cart.with-qty:has(.sold-out) .stepper { display: none; }

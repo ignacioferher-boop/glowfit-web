@@ -25,7 +25,10 @@ export async function getProducts(): Promise<Product[]> {
     console.error('getProducts', error);
     return SEED_PRODUCTS;
   }
-  return data as unknown as Product[];
+  const products = data as unknown as Product[];
+  const { data: levels } = await supabasePublic.rpc('stock_levels');
+  const avail = new Map(((levels ?? []) as { slug: string; available: number | null }[]).map((l) => [l.slug, l.available]));
+  return products.map((p) => ({ ...p, available: avail.has(p.slug) ? avail.get(p.slug)! : null }));
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {

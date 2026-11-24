@@ -35,7 +35,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const jsonLd = {
     '@context': 'https://schema.org', '@type': 'Product', name: product.name, image: product.images,
     description: product.tagline ?? undefined, brand: { '@type': 'Brand', name: 'Glowfit' },
-    offers: { '@type': 'Offer', priceCurrency: 'EUR', price: (product.price_cents / 100).toFixed(2), availability: 'https://schema.org/InStock' },
+    offers: { '@type': 'Offer', priceCurrency: 'EUR', price: (product.price_cents / 100).toFixed(2), availability: product.available === 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' },
   };
   return (
     <section className="page-section product-page">
