@@ -5,7 +5,7 @@ export const SITE = {
   // PENDIENTE CLIENTE: número de WhatsApp en formato internacional sin "+" (ej. 34600000000)
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '',
   // PENDIENTE CLIENTE: email público de contacto
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'pedidos@glowfit.group',
 };
 
 export const SHIPPING = {
