@@ -516,3 +516,7 @@ body:has(.ad-root) { background: #f4efe7; }
   .ad-pcard:hover { transform: none; }
 }
 @media (max-width: 860px) { .ad-seg.ad-only-mobile { display: inline-flex; } }
+.ad-ship-info { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--ad-line, #e6e1d6); border-radius: 12px; background: #fbfaf6; line-height: 1.5; }
+.ad-ship-info > span { flex: 1; word-break: break-all; }
+.ad-ship-info .ad-link { white-space: nowrap; }
+.ad-ship-form small.ad-error { display: block; margin: 6px 0 0; padding: 6px 10px; }

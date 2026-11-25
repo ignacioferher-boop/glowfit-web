@@ -1,4 +1,5 @@
 'use client';
+import { emailSuggestion, normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
 import { useState } from 'react';
 import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING } from '@/lib/config';
@@ -14,9 +15,9 @@ export default function Carrito() {
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '' });
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const errors = {
-    name: customer.name.trim().length < 2 ? 'Escribe tu nombre y apellidos' : '',
-    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email.trim()) ? '' : 'Escribe un email válido',
-    phone: customer.phone.replace(/[^0-9]/g, '').length >= 9 ? '' : 'Escribe un teléfono válido (9 dígitos)',
+    name: validFullName(customer.name) ? '' : 'Escribe tu nombre y al menos un apellido',
+    email: validEmailAddr(customer.email) ? '' : 'Escribe un email válido',
+    phone: normPhoneES(customer.phone) ? '' : 'Escribe un móvil o teléfono español válido (9 cifras)',
   };
   const valid = !errors.name && !errors.email && !errors.phone && accept;
   const field = (k: 'name' | 'email' | 'phone') => ({
@@ -104,7 +105,7 @@ export default function Carrito() {
         <p className="form-note">Los necesitamos para tu pedido, enviarte el recibo y avisarte del envío.</p>
         <label>Nombre y apellidos<input autoComplete="name" required {...field('name')} />{touched.name && errors.name && <span className="field-error">{errors.name}</span>}</label>
         <div className="row">
-          <label>Email<input type="email" autoComplete="email" required {...field('email')} />{touched.email && errors.email && <span className="field-error">{errors.email}</span>}</label>
+          <label>Email<input type="email" autoComplete="email" required {...field('email')} />{touched.email && errors.email && <span className="field-error">{errors.email}</span>}{!errors.email && emailSuggestion(customer.email) && <button type="button" className="field-hint" onClick={() => setCustomer({ ...customer, email: emailSuggestion(customer.email)! })}>¿Quisiste decir <strong>{emailSuggestion(customer.email)}</strong>?</button>}</label>
           <label>Teléfono<input type="tel" autoComplete="tel" required {...field('phone')} />{touched.phone && errors.phone && <span className="field-error">{errors.phone}</span>}</label>
         </div>
         <label className="accept">

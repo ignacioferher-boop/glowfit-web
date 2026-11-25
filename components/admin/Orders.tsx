@@ -2,7 +2,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { sb } from '@/lib/supabase-browser';
 import { media } from '@/lib/config';
-import { Badge, Drawer, Empty, FULFILL, Icon, Skeleton, downloadCSV, eur, fLabel, useToast, when, whenLong, type Order } from './ui';
+import { Badge, Drawer, Empty, FULFILL, Icon, Modal, Skeleton, downloadCSV, eur, fLabel, useToast, when, whenLong, type Order } from './ui';
+import { CARRIERS } from '@/lib/carriers';
+
+const h = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 const addr = (a: Order['shipping_address']) => (a ? [a.line1, a.line2, [a.postal_code, a.city].filter(Boolean).join(' '), a.state].filter(Boolean) : []);
 
@@ -68,13 +71,13 @@ export default function Orders({ orders, reload, focusId, clearFocus }: { orders
 
 function OrderDetail({ order, onClose, reload }: { order: Order; onClose: () => void; reload: () => Promise<void> }) {
   const toast = useToast();
-  const [tracking, setT] = useState(order.tracking ?? '');
   const [notes, setN] = useState(order.notes ?? '');
+  const [ship, setShip] = useState(false);
   const [busy, setBusy] = useState(false);
   const steps = ['nuevo', 'preparando', 'enviado', 'entregado'];
   const idx = steps.indexOf(order.fulfillment);
   const next = idx >= 0 && idx < steps.length - 1 ? steps[idx + 1] : null;
-  const dirty = tracking !== (order.tracking ?? '') || notes !== (order.notes ?? '');
+  const dirty = notes !== (order.notes ?? '');
 
   async function update(patch: Partial<Order>, ok: string) {
     setBusy(true);
@@ -90,10 +93,10 @@ function OrderDetail({ order, onClose, reload }: { order: Order; onClose: () => 
   function printSlip() {
     const w = window.open('', '_blank', 'width=720,height=900');
     if (!w) return;
-    const rows = (order.items ?? []).map((i) => `<tr><td>${i.qty}</td><td>${i.name}</td></tr>`).join('');
-    w.document.write(`<!doctype html><html><head><title>Albarán #${order.order_number}</title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;padding:32px}h1{font-size:22px;margin:16px 0 4px}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}.box{border:1px solid #ccc;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:15px;line-height:1.5}</style></head><body>
-<img src="${media('2026/05/LOGO-GLOWFIT.png')}" width="120"><h1>Albarán · Pedido #${order.order_number}</h1><div>${whenLong(order.created_at)}</div>
-<div class="box"><strong>Enviar a:</strong><br>${order.name}<br>${addr(order.shipping_address).join('<br>')}<br>${order.phone ?? ''}</div>
+    const rows = (order.items ?? []).map((i) => `<tr><td>${h(i.qty)}</td><td>${h(i.name)}</td></tr>`).join('');
+    w.document.write(`<!doctype html><html><head><title>Albarán #${h(order.order_number)}</title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;padding:32px}h1{font-size:22px;margin:16px 0 4px}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}.box{border:1px solid #ccc;border-radius:8px;padding:12px 16px;margin-top:16px;font-size:15px;line-height:1.5}</style></head><body>
+<img src="${media('2026/05/LOGO-GLOWFIT.png')}" width="120"><h1>Albarán · Pedido #${h(order.order_number)}</h1>${order.tracking ? `<div>${h(order.carrier)} · ${h(order.tracking)}</div>` : ''}<div>${whenLong(order.created_at)}</div>
+<div class="box"><strong>Enviar a:</strong><br>${h(order.name)}<br>${addr(order.shipping_address).map(h).join('<br>')}<br>${h(order.phone)}</div>
 <table><thead><tr><th>Uds.</th><th>Producto</th></tr></thead><tbody>${rows}</tbody></table>
 <p style="margin-top:32px;font-size:13px;color:#666">¡Gracias por confiar en Glowfit!</p><script>window.onload=()=>window.print()</script></body></html>`);
     w.document.close();
@@ -101,7 +104,7 @@ function OrderDetail({ order, onClose, reload }: { order: Order; onClose: () => 
 
   return (
     <Drawer title={`Pedido #${order.order_number}`} sub={whenLong(order.created_at)} onClose={onClose}
-      footer={<>{next && order.fulfillment !== 'cancelado' && <button className="ad-btn primary" disabled={busy} onClick={() => update({ fulfillment: next }, `Pedido marcado como ${fLabel(next).toLowerCase()}`)}><Icon name={next === 'enviado' ? 'truck' : 'check'} />Marcar como {fLabel(next).toLowerCase()}</button>}
+      footer={<>{next && order.fulfillment !== 'cancelado' && <button className="ad-btn primary" disabled={busy} onClick={() => next === 'enviado' ? setShip(true) : update({ fulfillment: next }, `Pedido marcado como ${fLabel(next).toLowerCase()}`)}><Icon name={next === 'enviado' ? 'truck' : 'check'} />Marcar como {fLabel(next).toLowerCase()}</button>}
         <button className="ad-btn" onClick={printSlip}><Icon name="print" />Albarán</button></>}>
       <div className="ad-steps" aria-label="Estado del pedido">
         {steps.map((s, i) => <div key={s} className={`ad-step${i <= idx ? ' done' : ''}${i === idx ? ' now' : ''}`}><span>{i < idx ? <Icon name="check" size={14} /> : i + 1}</span><small>{fLabel(s)}</small></div>)}
@@ -137,13 +140,66 @@ function OrderDetail({ order, onClose, reload }: { order: Order; onClose: () => 
       <div className="ad-box">
         <h4>Gestión</h4>
         <label className="ad-field"><span>Estado</span>
-          <select value={order.fulfillment} onChange={(e) => update({ fulfillment: e.target.value }, `Estado cambiado a ${fLabel(e.target.value).toLowerCase()}`)} disabled={busy}>
+          <select value={order.fulfillment} onChange={(e) => e.target.value === 'enviado' ? setShip(true) : update({ fulfillment: e.target.value }, `Estado cambiado a ${fLabel(e.target.value).toLowerCase()}`)} disabled={busy}>
             {FULFILL.map((f) => <option key={f.v} value={f.v}>{f.l}</option>)}
           </select></label>
-        <label className="ad-field"><span>Nº de seguimiento</span><input value={tracking} onChange={(e) => setT(e.target.value)} placeholder="Código de Correos, SEUR, GLS…" /></label>
+        <div className="ad-field"><span>Envío</span>
+          {order.tracking
+            ? <div className="ad-ship-info"><Icon name="truck" size={16} /><span><strong>{order.carrier || 'Transportista'}</strong> · {order.tracking}<br /><small className="ad-muted">{order.shipped_email_at ? `Email de envío enviado al cliente el ${when(order.shipped_email_at)}` : 'El cliente aún no ha recibido el email de envío'}</small></span><button className="ad-link" onClick={() => setShip(true)}>Cambiar o reenviar</button></div>
+            : <p className="ad-muted sm">Al marcarlo como enviado te pediremos el transportista y el número de seguimiento, y el cliente recibirá un email automáticamente.</p>}
+        </div>
         <label className="ad-field"><span>Notas internas</span><textarea rows={3} value={notes} onChange={(e) => setN(e.target.value)} placeholder="Solo las ve el equipo" /></label>
-        <button className="ad-btn" disabled={!dirty || busy} onClick={() => update({ tracking: tracking || null, notes: notes || null }, 'Cambios guardados')}>Guardar seguimiento y notas</button>
+        <button className="ad-btn" disabled={!dirty || busy} onClick={() => update({ notes: notes || null }, 'Notas guardadas')}>Guardar notas</button>
       </div>
+      {ship && <ShipModal order={order} onClose={() => setShip(false)} done={async () => { setShip(false); await reload(); }} />}
     </Drawer>
+  );
+}
+
+function ShipModal({ order, onClose, done }: { order: Order; onClose: () => void; done: () => Promise<void> }) {
+  const toast = useToast();
+  const [carrier, setCarrier] = useState(order.carrier ?? '');
+  const [other, setOther] = useState('');
+  const [tracking, setTracking] = useState(order.tracking ?? '');
+  const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const already = !!order.shipped_email_at;
+  const [resend, setResend] = useState(!already);
+  const name = carrier === 'Otra' ? other.trim() : carrier;
+  const trackErr = tracking.trim().length < 5 ? 'Escribe el número de seguimiento completo' : '';
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setTouched(true); setErr('');
+    if (!name) return setErr('Elige el transportista.');
+    if (trackErr) return;
+    setBusy(true);
+    const { data: { session } } = await sb().auth.getSession();
+    const r = await fetch('/api/orders/ship/', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token ?? ''}` }, body: JSON.stringify({ id: order.id, carrier: name, tracking, resend: already && resend }) }).catch(() => null);
+    const d = r ? await r.json().catch(() => ({})) : {};
+    setBusy(false);
+    if (!r?.ok) return setErr(d.error || 'No se pudo guardar. Inténtalo otra vez.');
+    toast(d.emailed ? 'Pedido enviado. El cliente ya tiene su email con el seguimiento.' : already && !resend ? 'Seguimiento actualizado' : 'Guardado, pero el email no salió. Prueba a reenviarlo.', d.emailed || (already && !resend) ? 'ok' : 'err');
+    await done();
+  }
+  return (
+    <Modal title={already ? 'Cambiar seguimiento' : `Enviar pedido #${order.order_number}`} onClose={onClose}>
+      <form onSubmit={submit} className="ad-ship-form">
+        <p className="ad-muted">El cliente recibirá un email con el transportista, el número de seguimiento y el plazo de entrega (2–4 días laborables).</p>
+        <label className="ad-field"><span>Transportista</span>
+          <select value={carrier} onChange={(e) => setCarrier(e.target.value)} data-autofocus>
+            <option value="" disabled>Elige uno…</option>
+            {CARRIERS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select></label>
+        {carrier === 'Otra' && <label className="ad-field"><span>Nombre del transportista</span><input value={other} onChange={(e) => setOther(e.target.value)} maxLength={60} /></label>}
+        <label className="ad-field"><span>Nº de seguimiento</span><input value={tracking} onChange={(e) => setTracking(e.target.value)} onBlur={() => setTouched(true)} placeholder="Ej. PQ4F6P0712345670128001X" autoComplete="off" maxLength={80} />
+          {touched && trackErr && <small className="ad-error">{trackErr}</small>}</label>
+        {already && <label className="ad-check"><input type="checkbox" checked={resend} onChange={(e) => setResend(e.target.checked)} />Volver a enviar el email al cliente</label>}
+        {err && <p className="ad-error" role="alert">{err}</p>}
+        <div className="ad-modal-actions">
+          <button type="button" className="ad-btn" onClick={onClose}>Cancelar</button>
+          <button className="ad-btn primary" disabled={busy}>{busy ? <span className="ad-spinner sm" /> : <Icon name="truck" />}{already ? 'Guardar' : 'Marcar como enviado y avisar'}</button>
+        </div>
+      </form>
+    </Modal>
   );
 }

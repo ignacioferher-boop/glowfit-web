@@ -40,7 +40,8 @@ export default function Page() {
           </ol>
         </> },
         { id: 'envios', title: 'Envíos', body: <>
-          <p>Enviamos a toda España. El envío estándar cuesta {formatEUR(SHIPPING.standardCents)}{SHIPPING.freeFromCents > 0 && <> y es <strong>gratis a partir de {formatEUR(SHIPPING.freeFromCents)}</strong></>}. El plazo habitual es de {SHIPPING.minDays} a {SHIPPING.maxDays} días laborables. Más información en <a href="/envios-y-entregas/">Envíos y entregas</a>.</p>
+          <p>Enviamos a toda España. El envío estándar cuesta {formatEUR(SHIPPING.standardCents)}{SHIPPING.freeFromCents > 0 && <> y es <strong>gratis a partir de {formatEUR(SHIPPING.freeFromCents)}</strong></>}. El plazo habitual es de {SHIPPING.minDays} a {SHIPPING.maxDays} días laborables y es orientativo. Al enviar el pedido te mandaremos por email el transportista y el número de seguimiento.</p>
+          <p>Glowfit no se hace responsable de los retrasos imputables a la empresa de transporte o a causas de fuerza mayor, aunque te ayudaremos a resolver cualquier incidencia con el transportista. Esto no limita los derechos que la normativa de consumo te reconoce: si el pedido no se entrega en 30 días naturales, puedes cancelarlo y recibir el reembolso completo. Más información en <a href="/envios-y-entregas/">Envíos y entregas</a>.</p>
         </> },
         { id: 'desistimiento', title: 'Derecho de desistimiento', body: <>
           <p>Dispones de <strong>14 días naturales</strong> desde la recepción para desistir de la compra sin indicar el motivo. Por motivos de higiene y salud, solo se aceptan devoluciones de productos <strong>precintados y sin abrir</strong> (art. 103 del Real Decreto Legislativo 1/2007). Consulta el procedimiento en <a href="/reembolso_devoluciones/">Devoluciones</a>.</p>

@@ -1,5 +1,12 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+
+// Ventanas y paneles se pintan al nivel del panel para que nada (barra inferior, cabecera) quede por encima
+function Layer({ children }: { children: ReactNode }) {
+  const [el] = useState<Element | null>(() => (typeof document === 'undefined' ? null : document.querySelector('.ad-root') ?? document.body));
+  return el ? createPortal(children, el) : <>{children}</>;
+}
 
 export const eur = (c: number | null | undefined) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((c ?? 0) / 100);
 export const when = (d: string) => new Date(d).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
@@ -21,6 +28,7 @@ export type Order = {
   id: string; order_number: number | null; created_at: string; status: string; fulfillment: string; email: string; name: string; phone: string | null;
   shipping_address: Record<string, string> | null; items: { name: string; qty: number; unit_cents: number; total_cents: number }[] | null;
   subtotal_cents: number; shipping_cents: number; total_cents: number; tracking: string | null; notes: string | null; accepts_marketing: boolean | null; email_sent_at: string | null;
+  carrier?: string | null; shipped_at?: string | null; shipped_email_at?: string | null;
 };
 export type Product = {
   id?: string; slug: string; name: string; category: string | null; tagline: string | null; short_description: string | null; description: string | null;
@@ -115,25 +123,25 @@ export function Modal({ title, children, onClose, wide = false }: { title: strin
     return () => { document.removeEventListener('keydown', onKey); prev?.focus(); };
   }, [onClose]);
   return (
-    <div className="ad-overlay" onMouseDown={onClose}>
+    <Layer><div className="ad-overlay" onMouseDown={onClose}>
       <div ref={ref} className={`ad-modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} onMouseDown={(e) => e.stopPropagation()}>
         <div className="ad-modal-head"><h2>{title}</h2><button className="ad-icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="x" /></button></div>
         {children}
       </div>
-    </div>
+    </div></Layer>
   );
 }
 
 export function Drawer({ title, sub, children, footer, onClose }: { title: string; sub?: ReactNode; children: ReactNode; footer?: ReactNode; onClose: () => void }) {
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [onClose]);
   return (
-    <div className="ad-overlay drawer" onMouseDown={onClose}>
+    <Layer><div className="ad-overlay drawer" onMouseDown={onClose}>
       <aside className="ad-drawer" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(e) => e.stopPropagation()}>
         <div className="ad-drawer-head"><div><h2>{title}</h2>{sub && <p>{sub}</p>}</div><button className="ad-icon-btn" onClick={onClose} aria-label="Cerrar"><Icon name="x" /></button></div>
         <div className="ad-drawer-body">{children}</div>
         {footer && <div className="ad-drawer-foot">{footer}</div>}
       </aside>
-    </div>
+    </div></Layer>
   );
 }
 
@@ -152,6 +160,6 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
 export function Badge({ v }: { v: string }) { return <span className={`ad-badge f-${v}`}><i />{fLabel(v)}</span>; }
 
 export function downloadCSV(name: string, rows: (string | number)[][]) {
-  const blob = new Blob(['﻿' + rows.map((l) => l.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\n')], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob(['﻿' + rows.map((l) => l.map((v) => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`; return `"${t.replace(/"/g, '""')}"`; }).join(';')).join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
 }

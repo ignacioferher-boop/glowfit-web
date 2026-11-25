@@ -6,6 +6,7 @@ import { SHIPPING } from '@/lib/config';
 import { checkStock } from '@/lib/stock';
 import { getInventorySettings } from '@/lib/settings';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
+import { normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -19,8 +20,8 @@ export async function POST(req: Request) {
   const c = body.customer || {};
   const name = String(c.name || '').trim().slice(0, 200);
   const email = String(c.email || '').trim().toLowerCase().slice(0, 200);
-  const phone = String(c.phone || '').trim().slice(0, 40);
-  if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/[^0-9]/g, '').length < 9)
+  const phone = normPhoneES(String(c.phone || '')) ?? '';
+  if (!validFullName(name) || !validEmailAddr(email) || !phone)
     return NextResponse.json({ error: 'Revisa tu nombre, email y teléfono' }, { status: 400 });
   if (c.accepted_terms !== true) return NextResponse.json({ error: 'Debes aceptar las condiciones de contratación' }, { status: 400 });
 
@@ -88,6 +89,10 @@ export async function POST(req: Request) {
       },
     })),
     shipping_address_collection: { allowed_countries: ['ES'] },
+    // Opción "Comprar como empresa": Stripe pide y valida el NIF/CIF para la factura
+    tax_id_collection: { enabled: true },
+    customer_creation: 'always',
+    billing_address_collection: 'auto',
     customer_email: email,
     shipping_options: [{
       shipping_rate_data: {

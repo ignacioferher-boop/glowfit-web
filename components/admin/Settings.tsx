@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { sb } from '@/lib/supabase-browser';
 import { SHIPPING } from '@/lib/config';
 import { Icon, eur, useToast } from './ui';
+import BackupCard from './BackupCard';
 
 export default function Settings({ email }: { email: string }) {
   const toast = useToast();
@@ -42,6 +43,7 @@ export default function Settings({ email }: { email: string }) {
         </dl>
         <p className="ad-muted sm">Para cambiar tarifas o activar los emails automáticos, pídeselo a tu equipo técnico.</p>
       </section>
+      <BackupCard delay={120} />
     </div>
   );
 }

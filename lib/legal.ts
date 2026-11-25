@@ -6,5 +6,5 @@ export const LEGAL = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@glowfit.group',
   brand: 'Glowfit',
   updated: '23 de noviembre de 2026',
-  termsVersion: '2026-11-23',
+  termsVersion: '2026-11-25',
 };

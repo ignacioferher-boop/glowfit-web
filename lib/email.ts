@@ -4,7 +4,7 @@ import { LEGAL } from './legal';
 
 type Item = { name: string | null; qty: number | null; total_cents: number | null };
 export type OrderMail = {
-  order_number: number; name: string; email: string; phone?: string | null;
+  order_number: number; name: string; email: string; phone?: string | null; tax_id?: string | null;
   address?: Record<string, string | null> | null; items: Item[]; shipping_cents: number; total_cents: number;
 };
 
@@ -110,6 +110,30 @@ ${label('Tu pedido')}${itemsTable(o)}
   };
 }
 
+export function shippedEmail(o: { order_number: number; name: string; carrier: string; tracking: string; items: Item[]; address?: Record<string, string | null> | null }) {
+  const first = esc((o.name || '').split(' ')[0] || 'hola');
+  const addr = addressLines(o.address);
+  const units = o.items.reduce((n, i) => n + (i.qty ?? 0), 0);
+  return {
+    subject: `📦 Tu pedido #${o.order_number} está en camino · Glowfit`,
+    html: layout({
+      preheader: `Tu pedido ya ha salido con ${o.carrier}. Nº de seguimiento: ${o.tracking}.`,
+      eyebrow: `Pedido #${o.order_number}`,
+      title: `¡Tu pedido va de camino, ${first}!`,
+      intro: `Hemos entregado tu paquete (${units} ${units === 1 ? 'producto' : 'productos'}) a la empresa de transporte. Llegará normalmente en 2–4 días laborables.`,
+      body: `${steps(2)}
+${card(`${label('Seguimiento del envío')}<p style="margin:0 0 4px;font-size:14px;color:${C.muted}">Transportista</p>
+<p style="margin:0 0 12px;font-size:17px;font-weight:700;color:${C.green}">${esc(o.carrier)}</p>
+<p style="margin:0 0 4px;font-size:14px;color:${C.muted}">Nº de seguimiento</p>
+<p style="margin:0;font-size:20px;font-weight:700;letter-spacing:1px;color:${C.text};font-family:monospace">${esc(o.tracking)}</p>`)}
+${addr.length ? card(`${label('Enviamos a')}<p style="margin:0;font-size:14px;line-height:1.6">${esc(o.name)}<br>${addr.join('<br>')}</p>`) : ''}
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>
+<p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:${C.muted}">Puedes seguir el paquete en la web de ${esc(o.carrier)} con el número de arriba. Los plazos de entrega son orientativos y los gestiona la empresa de transporte; si hubiera algún retraso o incidencia, escríbenos y lo resolvemos con ellos. Más información en nuestras <a href="${SITE}/envios-y-entregas/" style="color:${C.muted}">condiciones de envío</a>.</p>`,
+      footerNote: '¿Alguna duda con tu envío? Responde a este email y te ayudamos.',
+    }),
+  };
+}
+
 export function shopEmail(o: OrderMail) {
   const addr = addressLines(o.address);
   const wa = waLink(o.phone);
@@ -125,6 +149,7 @@ export function shopEmail(o: OrderMail) {
 <p style="margin:0 0 12px;font-size:14px;line-height:1.6"><a href="mailto:${esc(o.email)}" style="color:${C.text}">${esc(o.email)}</a>${o.phone ? `<br>${esc(o.phone)}` : ''}</p>
 ${button(`mailto:${o.email}?subject=${encodeURIComponent(`Tu pedido Glowfit #${o.order_number}`)}`, 'Escribir email', false)}${wa ? button(wa, 'WhatsApp', false) : ''}${o.phone ? button(`tel:${o.phone}`, 'Llamar', false) : ''}`)}
 ${card(`${label('Dirección de envío')}<p style="margin:0;font-size:14px;line-height:1.6">${esc(o.name)}<br>${addr.join('<br>')}</p>`)}
+${o.tax_id ? card(`${label('Pide factura')}<p style="margin:0;font-size:14px;line-height:1.6">NIF/CIF: <strong>${esc(o.tax_id)}</strong></p>`) : ''}
 ${label('Productos')}${itemsTable(o)}
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:8px auto 0"><tr><td>${button(PANEL, 'Abrir en el panel')}</td></tr></table>`,
       footerNote: 'Responde a este email para escribir directamente al cliente.',
@@ -182,14 +207,26 @@ export function loginCodeEmail(code: string) {
   };
 }
 
-export async function sendEmail(to: string, msg: { subject: string; html: string }, replyTo?: string) {
+export function backupEmail(counts: { orders: number; customers: number; messages: number }, date: string) {
+  return {
+    subject: `Copia de seguridad Glowfit · ${date}`,
+    html: layout({
+      eyebrow: 'SOLO PARA LA TIENDA', title: 'Copia de seguridad', preheader: `${counts.orders} pedidos · ${counts.customers} clientes`,
+      body: `${card(`${label('Copia diaria')}<p style="margin:0 0 8px;font-size:15px;line-height:1.6">Adjuntamos el Excel con todos los pedidos, clientes, mensajes de contacto y stock a día ${esc(date)}.</p>
+<p style="margin:0;font-size:14px;line-height:1.6;color:${C.muted}">${counts.orders} pedidos · ${counts.customers} registros de clientes · ${counts.messages} mensajes</p>`)}`,
+      footerNote: 'Guarda este email: si alguna vez hay un problema con la web, aquí tienes todos los datos.',
+    }),
+  };
+}
+
+export async function sendEmail(to: string, msg: { subject: string; html: string; attachments?: { filename: string; content: string }[] }, replyTo?: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM; // ej. "Glowfit <pedidos@tudominio.es>"
   if (!key || !from) return false;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [to], subject: msg.subject, html: msg.html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+    body: JSON.stringify({ from, to: [to], subject: msg.subject, html: msg.html, ...(msg.attachments ? { attachments: msg.attachments } : {}), ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
   if (!r.ok) console.error('Resend', r.status, await r.text());
   return r.ok;
