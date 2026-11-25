@@ -5,6 +5,7 @@ import { LEGAL } from '@/lib/legal';
 import { SHIPPING } from '@/lib/config';
 import { checkStock } from '@/lib/stock';
 import { getInventorySettings } from '@/lib/settings';
+import { allow, clientIp, tooMany } from '@/lib/ratelimit';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -23,13 +24,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Revisa tu nombre, email y teléfono' }, { status: 400 });
   if (c.accepted_terms !== true) return NextResponse.json({ error: 'Debes aceptar las condiciones de contratación' }, { status: 400 });
 
+  // Frena a quien intente bloquear el stock abriendo pagos sin parar
+  const ip = clientIp(req);
+  if (!(await allow(`checkout:ip:${ip}`, 8, 600)) || !(await allow(`checkout:email:${email}`, 5, 600)))
+    return tooMany('Has iniciado demasiados pagos seguidos. Espera unos minutos y vuelve a intentarlo.');
+
   const stockError = await checkStock(requested);
   if (stockError) return NextResponse.json({ error: stockError }, { status: 409 });
 
-  const { error: custErr } = await supabasePublic!.from('customers').insert({
-    name, email, phone, accepts_marketing: c.accepts_marketing !== false, terms_version: LEGAL.termsVersion, cart: requested,
-  });
-  if (custErr) console.error('Error guardando cliente', custErr);
+  const customer = { name, email, phone, accepts_marketing: c.accepts_marketing !== false, terms_version: LEGAL.termsVersion, cart: requested };
+  let { error: custErr } = await supabasePublic!.rpc('save_customer', { p_secret: process.env.ORDER_SECRET, p_row: customer });
+  if (custErr?.code === 'PGRST202') ({ error: custErr } = await supabasePublic!.from('customers').insert(customer));
+  if (custErr) console.error('Error guardando cliente', custErr.message);
 
   const secret = process.env.STRIPE_SECRET_KEY;
   if (!secret) return NextResponse.json({ error: 'El pago online se activará en breve. Hemos guardado tus datos y te contactaremos para completar tu pedido.' }, { status: 503 });
