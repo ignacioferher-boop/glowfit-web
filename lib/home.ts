@@ -24,7 +24,7 @@ export const SECTION_LABELS: Record<SectionType, string> = {
 };
 
 export const DEFAULT_HOME: HomeContent = {
-  announcement: { enabled: false, text: 'Envío gratis en pedidos desde 50 €', link: '/productos/' },
+  announcement: { enabled: false, text: 'Envíos a toda España en 2–4 días laborables', link: '/productos/' },
   sections: [
     {
       id: 'hero', type: 'hero', logo: media('2026/05/LOGO-GLOWFIT.png'), eyebrow: 'BIENESTAR . BELLEZA . HÁBITOS',
@@ -54,7 +54,7 @@ export function newSection(type: SectionType): Section {
     case 'text_image': return { id, type, title: 'TÍTULO DE LA SECCIÓN', body: 'Escribe aquí tu texto.', image: media('2026/06/FOTOS-CUADRADA-2.png'), reverse: false, button_text: '', button_link: '' };
     case 'text': return { id, type, title: 'TÍTULO', body: 'Escribe aquí tu texto.', align: 'center' };
     case 'image': return { id, type, image: media('2026/11/3-edited-scaled.png'), caption: '', link: '', wide: false };
-    case 'banner': return { id, type, title: 'ENVÍO GRATIS DESDE 50 €', body: 'Recíbelo en 2–4 días laborables en toda España.', button_text: 'VER PRODUCTOS', button_link: '/productos/', color: 'verde' };
+    case 'banner': return { id, type, title: 'ENVÍOS A TODA ESPAÑA', body: 'Recíbelo en 2–4 días laborables en toda España.', button_text: 'VER PRODUCTOS', button_link: '/productos/', color: 'verde' };
   }
 }
 

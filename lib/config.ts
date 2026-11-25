@@ -11,8 +11,8 @@ export const SITE = {
 export const SHIPPING = {
   // PENDIENTE CLIENTE: precio de envío estándar a España (en céntimos)
   standardCents: Number(process.env.SHIPPING_STANDARD_CENTS || 495),
-  // PENDIENTE CLIENTE: envío gratis a partir de este subtotal (en céntimos). 0 = nunca gratis
-  freeFromCents: Number(process.env.SHIPPING_FREE_FROM_CENTS || 5000),
+  // Envío gratis a partir de este subtotal (en céntimos). 0 = nunca gratis (decisión 2026-11-25)
+  freeFromCents: Number(process.env.SHIPPING_FREE_FROM_CENTS || 0),
   // PENDIENTE CLIENTE: plazo de entrega en días laborables
   minDays: 2,
   maxDays: 4,
