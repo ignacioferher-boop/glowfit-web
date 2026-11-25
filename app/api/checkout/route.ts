@@ -58,7 +58,9 @@ export async function POST(req: Request) {
   // Si el cliente no paga a tiempo, la reserva caduca sola y el stock vuelve a estar disponible.
   const orderSecret = process.env.ORDER_SECRET;
   const inv = await getInventorySettings();
-  const minutes = Math.max(30, Math.min(1440, inv.reserve_minutes || 30));
+  // Reserva del stock: lo que diga el panel (mínimo 5 min). La página de pago de Stripe exige al menos 30 min de vida.
+  const minutes = Math.max(5, Math.min(1440, inv.reserve_minutes || 10));
+  const sessionMinutes = Math.max(30, minutes);
   let reservation: string | null = null;
   if (orderSecret) {
     const { data: r, error: rErr } = await supabasePublic!.rpc('reserve_stock', { p_secret: orderSecret, p_items: lines.map(({ p, qty }) => ({ slug: p.slug, qty })), p_minutes: minutes });
@@ -78,7 +80,7 @@ export async function POST(req: Request) {
   try {
   session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    expires_at: Math.floor(Date.now() / 1000) + minutes * 60,
+    expires_at: Math.floor(Date.now() / 1000) + sessionMinutes * 60,
     locale: 'es',
     line_items: lines.map(({ p, qty }) => ({
       quantity: qty,

@@ -8,7 +8,7 @@ type Comp = { pack_id: string; component_id: string; qty: number };
 type Log = { id: number; product_id: string | null; delta: number; reason: string; order_number: number | null; created_at: string };
 type Res = { id: string; items: { product_id: string; qty: number }[]; expires_at: string; status: string; created_at: string };
 type Inv = { low_stock_threshold: number; reserve_minutes: number; show_exact: boolean; notify_low_stock: boolean };
-const DEF: Inv = { low_stock_threshold: 5, reserve_minutes: 30, show_exact: true, notify_low_stock: true };
+const DEF: Inv = { low_stock_threshold: 5, reserve_minutes: 10, show_exact: true, notify_low_stock: true };
 
 const REASONS = ['Recuento', 'Rotura o caducado', 'Muestra o regalo', 'Devolución de cliente', 'Otro'];
 
@@ -73,7 +73,7 @@ export default function Inventory() {
   }
 
   async function saveInv() {
-    const v: Inv = { ...inv, low_stock_threshold: Math.max(1, Math.min(50, Math.round(inv.low_stock_threshold) || 5)), reserve_minutes: Math.max(30, Math.min(1440, inv.reserve_minutes)) };
+    const v: Inv = { ...inv, low_stock_threshold: Math.max(1, Math.min(50, Math.round(inv.low_stock_threshold) || 5)), reserve_minutes: Math.max(5, Math.min(1440, inv.reserve_minutes)) };
     const { error } = await sb().from('site_settings').upsert({ key: 'inventory', value: v });
     if (error) return toast('No se pudo guardar', 'err');
     setInv(v); setSavedInv(v); toast('Ajustes de inventario guardados. Se ven en la web en unos minutos.');
@@ -154,9 +154,9 @@ export default function Inventory() {
           </div>
           <label className="ad-field"><span>Tiempo que se guarda el producto mientras el cliente paga</span>
             <select value={inv.reserve_minutes} onChange={(e) => setInv({ ...inv, reserve_minutes: Number(e.target.value) })}>
-              {[30, 45, 60, 120].map((m) => <option key={m} value={m}>{m < 60 ? `${m} minutos` : `${m / 60} ${m === 60 ? 'hora' : 'horas'}`}</option>)}
+              {[10, 15, 30, 45, 60, 120].map((m) => <option key={m} value={m}>{m < 60 ? `${m} minutos` : `${m / 60} ${m === 60 ? 'hora' : 'horas'}`}</option>)}
             </select>
-            <small className="ad-muted">Si no paga en ese tiempo, el pago caduca y los botes vuelven a estar a la venta. 30 minutos es el mínimo que permite Stripe.</small>
+            <small className="ad-muted">Si no paga en ese tiempo, los botes vuelven a estar a la venta para otros clientes.</small>
           </label>
           <label className="ad-switch-row"><Switch on={inv.notify_low_stock} onChange={(v) => setInv({ ...inv, notify_low_stock: v })} label="Email de stock bajo" /><span>Enviarme un email cuando algo baje del aviso</span></label>
           <div className="ad-modal-actions"><button className="ad-btn primary" disabled={!dirty} onClick={saveInv}><Icon name="check" />Guardar ajustes</button></div>

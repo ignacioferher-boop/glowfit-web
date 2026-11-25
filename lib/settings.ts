@@ -11,7 +11,7 @@ export type InventorySettings = {
   notify_low_stock: boolean;
 };
 
-export const INVENTORY_DEFAULTS: InventorySettings = { low_stock_threshold: 5, reserve_minutes: 30, show_exact: true, notify_low_stock: true };
+export const INVENTORY_DEFAULTS: InventorySettings = { low_stock_threshold: 5, reserve_minutes: 10, show_exact: true, notify_low_stock: true };
 
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
   if (!supabasePublic) return fallback;
