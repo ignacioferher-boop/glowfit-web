@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
 import { getProducts } from '@/lib/data';
 import { SHIPPING } from '@/lib/config';
@@ -39,7 +40,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
   return (
     <section className="page-section product-page">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <nav className="breadcrumb" aria-label="Migas de pan">
         <a href="/">Inicio</a><span aria-hidden="true">/</span><a href="/productos/">Productos</a>
         {product.catLabel && <><span aria-hidden="true">/</span><a href={`/productos/?cat=${encodeURIComponent(product.category!)}`}>{product.catLabel}</a></>}
@@ -68,7 +69,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
           )}
           <CurrencyNote eurCents={product.price_cents} />
-          {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: product.short_description }} />}
+          {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: cleanHtml(product.short_description) }} />}
 
           <AddToCart product={product} withQty />
           <TrustBar variant="list" />
@@ -77,7 +78,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {longDesc && (
               <details open>
                 <summary>Descripción</summary>
-                <div className="rich" dangerouslySetInnerHTML={{ __html: longDesc }} />
+                <div className="rich" dangerouslySetInnerHTML={{ __html: cleanHtml(longDesc) }} />
               </details>
             )}
             <details>

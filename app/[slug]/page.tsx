@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPage } from '@/lib/data';
+import { cleanHtml } from '@/lib/sanitize';
 
 export const revalidate = 300;
 const EXCLUDED = new Set(['carrito', 'tienda', 'finalizar-compra', 'productos-3', 'blog', 'sobre-nosotros']);
@@ -20,7 +21,7 @@ export default async function WpPage({ params }: { params: Promise<{ slug: strin
   const page = await getPage(slug);
   if (!page) notFound();
   // Quita restos de formularios de WordPress que no funcionan fuera de WP
-  const html = page.content.replace(/<form[\s\S]*?<\/form>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+  const html = cleanHtml(page.content.replace(/<form[\s\S]*?<\/form>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, ''));
   const empty = html.replace(/<[^>]+>/g, '').trim().length === 0;
   return (
     <article className={`page-section wp-page ${BLOG.has(slug) ? 'blog-post' : 'legal'}`}>

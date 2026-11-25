@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 
 // Texto sencillo del editor: párrafos separados por línea en blanco, "- " para listas,
 // **negrita** y [texto](/enlace).
-const safe = (l: string) => (/^(\/|https?:\/\/|mailto:|tel:|#)/i.test(l.trim()) ? l.trim() : '#');
+const safe = (l: string) => (/^(\/(?!\/)|https?:\/\/|mailto:|tel:|#)/i.test(l.trim()) ? l.trim() : '#');
 function inline(t: string): ReactNode[] {
   const out: ReactNode[] = [];
   const re = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)\s]+)\)/g;

@@ -4,7 +4,7 @@ import { media } from '@/lib/config';
 import type { ShopProduct } from '@/lib/shop';
 import type { Section } from '@/lib/home';
 
-const safeLink = (l?: string) => (l && /^(\/|https?:\/\/|mailto:|tel:|#)/i.test(l.trim()) ? l.trim() : '/productos/');
+const safeLink = (l?: string) => (l && /^(\/(?!\/)|https?:\/\/|mailto:|tel:|#)/i.test(l.trim()) ? l.trim() : '/productos/');
 
 function Lines({ text }: { text: string }) {
   const lines = (text || '').split('\n');

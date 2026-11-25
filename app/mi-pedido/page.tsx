@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { supabasePublic } from '@/lib/data';
 import { media } from '@/lib/config';
 import { Price } from '@/components/currency';
 
@@ -24,10 +23,11 @@ export default function MiPedido() {
     const n = Number(num.replace(/[^0-9]/g, ''));
     if (!n || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Escribe tu número de pedido y el email con el que compraste.'); return; }
     setBusy(true);
-    const { data, error: err } = await supabasePublic!.rpc('lookup_order', { p_number: n, p_email: email.trim() });
+    const r = await fetch('/api/order-lookup/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ number: n, email: email.trim() }) }).catch(() => null);
+    const d = r ? await r.json().catch(() => ({})) : {};
     setBusy(false);
-    const row = Array.isArray(data) ? data[0] : null;
-    if (err || !row) { setError('No encontramos ningún pedido con esos datos. Revisa el número (lo tienes en el email de confirmación) y el email.'); return; }
+    const row = d.order;
+    if (!r || !r.ok || !row) { setError(d.error || 'No hemos podido buscar tu pedido. Inténtalo de nuevo.'); return; }
     setOrder(row as Found);
   }
 
