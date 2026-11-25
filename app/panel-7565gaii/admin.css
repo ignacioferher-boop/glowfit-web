@@ -434,3 +434,4 @@ body:has(.ad-root) { background: #f4efe7; }
   .ad-ed-devices .ad-seg { display: none; }
 }
 @media (min-width: 861px) { .ad-ed-bar .ad-seg.ad-only-mobile { display: none; } }
+.ad-login-modes { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; margin: 14px 0 6px; } .ad-login-modes .ad-link { font-size: .88rem; }

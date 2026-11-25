@@ -57,7 +57,7 @@ function Login() {
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<'password' | 'link'>('password');
+  const [mode, setMode] = useState<'password' | 'link' | 'signup'>('password');
   const [sent, setSent] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg('');
@@ -66,6 +66,13 @@ function Login() {
       const { error } = await sb().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/panel-7565gaii/` } });
       if (error) setMsg(error.status === 429 ? 'Has pedido muchos enlaces. Espera unos minutos.' : 'No se pudo enviar el enlace. Revisa el email.');
       else setSent(true);
+    } else if (mode === 'signup') {
+      if (password.length < 8) { setMsg('Usa al menos 8 caracteres.'); setBusy(false); return; }
+      const { data, error } = await sb().auth.signUp({ email: email.trim(), password });
+      // Los emails de administrador se confirman solos: si no vino sesión, intentamos entrar directamente
+      const ok = !error && (data.session || !(await sb().auth.signInWithPassword({ email: email.trim(), password })).error);
+      if (error) setMsg(error.status === 429 ? 'Demasiados intentos. Espera unos minutos.' : 'No se pudo crear la cuenta. Prueba con otra contraseña.');
+      else if (!ok) setMsg('Ese email ya tiene cuenta o no tiene permiso de administrador. Usa otro email de administrador o entra con enlace.');
     } else {
       const { error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
       if (error) setMsg('El email o la contraseña no son correctos.');
@@ -89,14 +96,18 @@ function Login() {
         <h1>Panel de la tienda</h1>
         <p className="ad-muted">Entra para gestionar pedidos, productos y clientes.</p>
         <label className="ad-field"><span>Email</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-        {mode === 'password' && <label className="ad-field"><span>Contraseña</span>
-          <span className="ad-input-icon"><input type={show ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        {mode !== 'link' && <label className="ad-field"><span>{mode === 'signup' ? 'Elige una contraseña (mínimo 8 caracteres)' : 'Contraseña'}</span>
+          <span className="ad-input-icon"><input type={show ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
             <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}><Icon name={show ? 'eyeoff' : 'eye'} /></button></span>
         </label>}
         {msg && <p className="ad-error" role="alert">{msg}</p>}
-        <button className="ad-btn primary full lg" disabled={busy}>{busy ? <span className="ad-spinner sm" /> : mode === 'link' ? 'Enviarme un enlace de acceso' : 'Entrar'}</button>
-        <button type="button" className="ad-btn ghost full" onClick={() => { setMode(mode === 'link' ? 'password' : 'link'); setMsg(''); }}>{mode === 'link' ? 'Entrar con contraseña' : 'Entrar sin contraseña (enlace al email)'}</button>
-        <p className="ad-muted sm">¿Necesitas acceso? Pide que añadan tu email como administrador.</p>
+        <button className="ad-btn primary full lg" disabled={busy}>{busy ? <span className="ad-spinner sm" /> : mode === 'link' ? 'Enviarme un enlace de acceso' : mode === 'signup' ? 'Crear cuenta y entrar' : 'Entrar'}</button>
+        <div className="ad-login-modes">
+          {mode !== 'password' && <button type="button" className="ad-link" onClick={() => { setMode('password'); setMsg(''); }}>Entrar con contraseña</button>}
+          {mode !== 'link' && <button type="button" className="ad-link" onClick={() => { setMode('link'); setMsg(''); }}>Entrar con enlace al email</button>}
+          {mode !== 'signup' && <button type="button" className="ad-link" onClick={() => { setMode('signup'); setMsg(''); }}>Crear cuenta</button>}
+        </div>
+        <p className="ad-muted sm">Solo pueden entrar los emails autorizados como administrador.</p>
       </form>
     </div>
   );
