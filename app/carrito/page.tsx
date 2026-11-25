@@ -40,6 +40,11 @@ export default function Carrito() {
         }),
       });
       const data = await res.json();
+      if (Array.isArray(data.unavailable) && data.unavailable.length) {
+        // Quita del carrito lo que ya no se vende, para que el cliente pueda seguir
+        data.unavailable.forEach((slug: string) => remove(slug));
+        throw new Error('Hemos quitado de tu carrito un producto que ya no está disponible. Revisa el total y vuelve a pulsar «Continuar al pago».');
+      }
       if (!res.ok || !data.url) throw new Error(data.error || 'No se pudo iniciar el pago');
       window.location.href = data.url;
     } catch (e) {

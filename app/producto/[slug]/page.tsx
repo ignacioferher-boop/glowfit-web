@@ -1,5 +1,5 @@
 import BlackFridayPromo from '@/components/BlackFridayPromo';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
 import { getProducts } from '@/lib/data';
@@ -31,7 +31,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const all = enrich(await getProducts());
   const product = all.find((p) => p.slug === slug);
-  if (!product) notFound();
+  if (!product) {
+    // Mientras dura el Black Friday, el Pack Quema Grasa está oculto: quien llegue por un enlace antiguo ve la oferta
+    if (slug === 'pack-glowxpro-bloom' && all.some((p) => p.slug === 'pack-black-friday')) redirect('/producto/pack-black-friday/');
+    notFound();
+  }
   const related = [...all.filter((p) => p.slug !== slug && p.category === product.category), ...all.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
   const save = product.compareAtCents ? product.compareAtCents - product.price_cents : 0;
   const isPack = product.includes.length > 0;

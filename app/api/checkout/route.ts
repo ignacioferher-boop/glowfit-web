@@ -49,6 +49,9 @@ export async function POST(req: Request) {
     return p ? [{ p, qty: r.qty }] : [];
   });
   if (!lines.length) return NextResponse.json({ error: 'Los productos ya no están disponibles' }, { status: 400 });
+  // Si algo del carrito ya no se vende, avisamos en vez de cobrar el resto sin decir nada
+  const missing = requested.filter((r) => !catalog.some((p) => p.slug === r.slug));
+  if (missing.length) return NextResponse.json({ error: 'Uno de los productos de tu carrito ya no está disponible. Quítalo del carrito para continuar.', unavailable: missing.map((m) => m.slug) }, { status: 409 });
 
   const subtotal = lines.reduce((n, l) => n + l.p.price_cents * l.qty, 0);
   const free = SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents;
