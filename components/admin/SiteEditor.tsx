@@ -1,10 +1,252 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sb } from '@/lib/supabase-browser';
 import { enrich, type ShopProduct } from '@/lib/shop';
 import type { Product as ShopRow } from '@/lib/types';
 import { DEFAULT_HOME, SECTION_LABELS, newSection, type HomeContent, type Section, type SectionType } from '@/lib/home';
 import { Icon, Modal, Skeleton, Switch, when, useToast } from './ui';
+import { DEFAULT_FOOTER, DEFAULT_PAGES, EDITABLE_PAGES, type FooterContent, type PageKey, type PageSection, type TextPage } from '@/lib/pages';
+
+type EdPage = 'home' | PageKey | 'footer';
+const PAGES: { k: EdPage; l: string; i: string; path: string }[] = [
+  { k: 'home', l: 'Portada', i: 'home', path: '/' },
+  { k: 'sobre-glowfit', l: EDITABLE_PAGES['sobre-glowfit'].label, i: 'users', path: EDITABLE_PAGES['sobre-glowfit'].path },
+  { k: 'preguntas-frecuentes', l: EDITABLE_PAGES['preguntas-frecuentes'].label, i: 'edit', path: EDITABLE_PAGES['preguntas-frecuentes'].path },
+  { k: 'footer', l: 'Pie de página y redes', i: 'layout', path: '/' },
+];
+
+async function revalidate() {
+  const token = (await sb().auth.getSession()).data.session?.access_token;
+  const r = await fetch('/api/revalidate', { method: 'POST', headers: { authorization: `Bearer ${token ?? ''}` } }).catch(() => null);
+  return !!r?.ok;
+}
+
+export default function SiteEditor({ onExit }: { onExit?: () => void }) {
+  const [page, setPage] = useState<EdPage>(() => { try { return (sessionStorage.getItem('gf-ed-page') as EdPage) || 'home'; } catch { return 'home'; } });
+  const [footer, setFooter] = useState<FooterContent>(DEFAULT_FOOTER);
+  useEffect(() => { sb().from('site_settings').select('value').eq('key', 'footer').maybeSingle().then(({ data }) => { if (data?.value) setFooter({ ...DEFAULT_FOOTER, ...(data.value as FooterContent) }); }); }, [page]);
+  const pick = (k: EdPage) => { setPage(k); try { sessionStorage.setItem('gf-ed-page', k); } catch {} };
+  const cur = PAGES.find((p) => p.k === page)!;
+  return (
+    <div className="ad-ed-shell">
+      <div className="ad-ed-top">
+        {onExit && <button className="ad-btn sm" onClick={onExit}><Icon name="left" size={16} />Volver al panel</button>}
+        <div className="ad-ed-pages" role="tablist" aria-label="Qué parte de la web editar">
+          {PAGES.map((p) => <button key={p.k} role="tab" aria-selected={page === p.k} className={page === p.k ? 'active' : ''} onClick={() => pick(p.k)}><Icon name={p.i} size={15} />{p.l}</button>)}
+        </div>
+        <a className="ad-btn ghost sm ad-hide-mobile" href={cur.path} target="_blank" rel="noopener"><Icon name="ext" size={15} />Ver en la web</a>
+      </div>
+      {page === 'home' && <HomeEditor footer={footer} />}
+      {page === 'footer' && <FooterEditor onSaved={setFooter} />}
+      {page !== 'home' && page !== 'footer' && <DocEditor key={page} pageKey={page} footer={footer} />}
+    </div>
+  );
+}
+
+/* ---------- Editor genérico para páginas de texto y pie de página ---------- */
+function useContent<T>(key: string, fallback: T) {
+  const toast = useToast();
+  const LS = `gf-draft-${key}`;
+  const [draft, setDraft] = useState<T | null>(null);
+  const [published, setPublished] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    sb().from('site_settings').select('value').eq('key', key).maybeSingle().then(({ data }) => {
+      const pub = data?.value ? ({ ...fallback, ...(data.value as T) } as T) : fallback;
+      setPublished(JSON.stringify(pub));
+      let start = pub;
+      try { const d = localStorage.getItem(LS); if (d && d !== JSON.stringify(pub)) { start = JSON.parse(d); toast('Hemos recuperado los cambios que no publicaste'); } } catch {}
+      setDraft(start);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  useEffect(() => {
+    if (!draft) return;
+    try { if (JSON.stringify(draft) === published) localStorage.removeItem(LS); else localStorage.setItem(LS, JSON.stringify(draft)); } catch {}
+  }, [draft, published, LS]);
+  const dirty = !!draft && JSON.stringify(draft) !== published;
+  async function publish() {
+    if (!draft) return;
+    setBusy(true);
+    const { data: u } = await sb().auth.getUser();
+    const { error } = await sb().from('site_settings').upsert({ key, value: draft, updated_by: u.user?.email ?? null });
+    if (error) { setBusy(false); toast('No se pudo publicar', 'err'); return false; }
+    const ok = await revalidate();
+    setBusy(false); setPublished(JSON.stringify(draft));
+    toast(ok ? '¡Publicado! Ya se ve en la web.' : 'Publicado. Se verá en la web en unos minutos.');
+    return true;
+  }
+  const discard = () => { setDraft(JSON.parse(published)); toast('Cambios descartados'); };
+  return { draft, setDraft, dirty, busy, publish, discard };
+}
+
+function EdBar({ dirty, busy, onPublish, onDiscard, onVersions, view, setView }: { dirty: boolean; busy: boolean; onPublish: () => void; onDiscard: () => void; onVersions: () => void; view: 'edit' | 'preview'; setView: (v: 'edit' | 'preview') => void }) {
+  return (
+    <div className="ad-ed-bar ad-rise">
+      <div className="ad-ed-status">{dirty ? <><i className="dot warn" />Cambios sin publicar</> : <><i className="dot ok" />Todo publicado</>}</div>
+      <div className="ad-seg ad-only-mobile">
+        <button className={view === 'edit' ? 'active' : ''} onClick={() => setView('edit')}>Editar</button>
+        <button className={view === 'preview' ? 'active' : ''} onClick={() => setView('preview')}>Vista previa</button>
+      </div>
+      <div className="ad-ed-actions">
+        <button className="ad-btn ghost sm" onClick={onVersions}><Icon name="history" />Versiones</button>
+        <button className="ad-btn sm" disabled={!dirty} onClick={onDiscard}>Descartar</button>
+        <button className="ad-btn primary sm" disabled={!dirty || busy} onClick={onPublish}>{busy ? <span className="ad-spinner sm" /> : <Icon name="check" />}Publicar</button>
+      </div>
+    </div>
+  );
+}
+
+function PreviewFrame({ payload, onSelect, scrollTo }: { payload: unknown; onSelect?: (id: string) => void; scrollTo?: string | null }) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const ready = useRef(false);
+  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(() => setScale(Math.min(1, el.clientWidth / 1280)));
+    ro.observe(el); return () => ro.disconnect();
+  }, []);
+  const send = useCallback(() => { if (ready.current) frame.current?.contentWindow?.postMessage(payload, window.location.origin); }, [payload]);
+  useEffect(() => { send(); }, [send]);
+  useEffect(() => { if (scrollTo && ready.current) frame.current?.contentWindow?.postMessage({ type: 'scrollTo', id: scrollTo }, window.location.origin); }, [scrollTo]);
+  useEffect(() => {
+    const on = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || !e.data) return;
+      if (e.data.type === 'ready') { ready.current = true; send(); }
+      if (e.data.type === 'select' && onSelect) onSelect(e.data.id);
+    };
+    window.addEventListener('message', on); return () => window.removeEventListener('message', on);
+  }, [send, onSelect]);
+  return (
+    <div className="ad-ed-preview">
+      <div className="ad-ed-devices">
+        <div className="ad-seg">
+          <button className={device === 'desktop' ? 'active' : ''} onClick={() => setDevice('desktop')} aria-label="Vista ordenador"><Icon name="monitor" size={16} /></button>
+          <button className={device === 'mobile' ? 'active' : ''} onClick={() => setDevice('mobile')} aria-label="Vista móvil"><Icon name="mobile" size={16} /></button>
+        </div>
+        <small className="ad-muted">Vista previa · no es público hasta que pulses Publicar</small>
+      </div>
+      <div className={`ad-ed-frame ${device}`} ref={box}>
+        <iframe ref={frame} src="/vista-previa/" title="Vista previa" onLoad={() => { ready.current = true; send(); }}
+          style={device === 'desktop' && scale >= 0.4 ? { width: 1280, height: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: '0 0' } : undefined} />
+      </div>
+    </div>
+  );
+}
+
+function VersionsModal<T>({ k, onPick, onDefault, onClose }: { k: string; onPick: (v: T) => void; onDefault: () => void; onClose: () => void }) {
+  const [list, setList] = useState<{ id: number; value: T; created_at: string; created_by: string | null }[] | null>(null);
+  useEffect(() => { sb().from('site_versions').select('*').eq('key', k).order('created_at', { ascending: false }).limit(20).then(({ data }) => setList((data as typeof list) ?? [])); }, [k]);
+  return (
+    <Modal title="Versiones anteriores" onClose={onClose}>
+      <p className="ad-muted">Cada vez que publicas se guarda la versión anterior. Al recuperar una, se carga en el editor para que la revises antes de publicar.</p>
+      {!list ? <Skeleton rows={3} h={40} /> : list.length === 0 ? <p className="ad-muted">Aún no hay versiones anteriores.</p> : (
+        <ul className="ad-res-list">{list.map((v) => <li key={v.id}><span>{when(v.created_at)}{v.created_by && <small className="ad-muted"> · {v.created_by}</small>}</span><button className="ad-btn sm" onClick={() => onPick(v.value)}>Recuperar</button></li>)}</ul>
+      )}
+      <div className="ad-modal-actions"><button className="ad-btn" onClick={onDefault}>Volver al texto original</button></div>
+    </Modal>
+  );
+}
+
+function DocEditor({ pageKey, footer }: { pageKey: PageKey; footer: FooterContent }) {
+  const toast = useToast();
+  const { draft, setDraft, dirty, busy, publish, discard } = useContent<TextPage>(`page:${pageKey}`, DEFAULT_PAGES[pageKey]);
+  const [view, setView] = useState<'edit' | 'preview'>('edit');
+  const [open, setOpen] = useState<string | null>(null);
+  const [versions, setVersions] = useState(false);
+  const [dragI, setDragI] = useState<number | null>(null);
+  const payload = useMemoPayload({ type: 'draft', page: pageKey, doc: draft, footer });
+  if (!draft) return <Skeleton rows={6} h={56} />;
+  const isFaq = pageKey === 'preguntas-frecuentes';
+  const set = (p: Partial<TextPage>) => setDraft({ ...draft, ...p });
+  const setSec = (id: string, p: Partial<PageSection>) => set({ sections: draft.sections.map((s) => (s.id === id ? { ...s, ...p } : s)) });
+  const move = (a: number, b: number) => { if (b < 0 || b >= draft.sections.length) return; const l = [...draft.sections]; const [m] = l.splice(a, 1); l.splice(b, 0, m); set({ sections: l }); };
+  return (
+    <div className={`ad-ed ${view}`}>
+      <EdBar dirty={dirty} busy={busy} onPublish={publish} onDiscard={discard} onVersions={() => setVersions(true)} view={view} setView={setView} />
+      <div className="ad-ed-body">
+        <aside className="ad-ed-panel ad-card">
+          <h3>{EDITABLE_PAGES[pageKey].label}</h3>
+          <p className="ad-muted sm">Escribe como en un mensaje. Deja una línea en blanco para separar párrafos, empieza con «- » para hacer una lista, **así** para negrita y [texto](/enlace) para enlaces.</p>
+          <TextField label="Frase pequeña de arriba" value={draft.eyebrow} onChange={(v) => set({ eyebrow: v })} />
+          <TextField label="Título" value={draft.title} onChange={(v) => set({ title: v })} />
+          <TextField label="Introducción" rows={3} value={draft.intro} onChange={(v) => set({ intro: v })} />
+          <div className="ad-ed-sec-head"><strong>{isFaq ? 'Preguntas' : 'Apartados'}</strong><small className="ad-muted">{draft.sections.length}</small></div>
+          <ul className="ad-ed-list">
+            {draft.sections.map((s, i) => (
+              <li key={s.id} className={`col${open === s.id ? ' sel' : ''}${dragI === i ? ' dragging' : ''}`} draggable={open !== s.id} onDragStart={() => setDragI(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragI !== null) move(dragI, i); setDragI(null); }} onDragEnd={() => setDragI(null)}>
+                <div className="ad-ed-row">
+                  <span className="ad-ed-grip" aria-hidden="true"><Icon name="grip" size={16} /></span>
+                  <button className="ad-ed-item" onClick={() => setOpen(open === s.id ? null : s.id)}>
+                    <span><strong>{s.title || (isFaq ? 'Pregunta sin título' : 'Apartado sin título')}</strong><small>{s.body.replace(/\s+/g, ' ').slice(0, 60) || 'Sin texto'}</small></span>
+                  </button>
+                  <div className="ad-ed-tools">
+                    <button className="ad-icon-btn" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Subir" title="Subir"><Icon name="up" size={16} /></button>
+                    <button className="ad-icon-btn" onClick={() => move(i, i + 1)} disabled={i === draft.sections.length - 1} aria-label="Bajar" title="Bajar"><Icon name="down" size={16} /></button>
+                  </div>
+                </div>
+                {open === s.id && (
+                  <div className="ad-ed-inline">
+                    <TextField label={isFaq ? 'Pregunta' : 'Título del apartado'} value={s.title} onChange={(v) => setSec(s.id, { title: v })} />
+                    <TextField label={isFaq ? 'Respuesta' : 'Texto'} rows={6} value={s.body} onChange={(v) => setSec(s.id, { body: v })} />
+                    <div className="ad-ed-inline-actions">
+                      <button className="ad-btn ghost sm danger-text" onClick={() => { set({ sections: draft.sections.filter((x) => x.id !== s.id) }); setOpen(null); toast(isFaq ? 'Pregunta quitada. Pulsa Publicar para guardarlo.' : 'Apartado quitado. Pulsa Publicar para guardarlo.'); }}><Icon name="trash" size={15} />Quitar</button>
+                      <button className="ad-btn sm" onClick={() => setOpen(null)}><Icon name="check" size={15} />Listo</button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <button className="ad-btn primary full" onClick={() => { const id = `s-${Math.random().toString(36).slice(2, 7)}`; set({ sections: [...draft.sections, { id, title: isFaq ? 'Nueva pregunta' : 'Nuevo apartado', body: '' }] }); setOpen(id); }}><Icon name="plus" />{isFaq ? 'Añadir pregunta' : 'Añadir apartado'}</button>
+        </aside>
+        <PreviewFrame payload={payload} scrollTo={open} onSelect={(id) => { if (draft.sections.some((x) => x.id === id)) { setOpen(id); setView('edit'); } }} />
+      </div>
+      {versions && <VersionsModal<TextPage> k={`page:${pageKey}`} onClose={() => setVersions(false)} onPick={(v) => { setDraft({ ...DEFAULT_PAGES[pageKey], ...v }); setVersions(false); toast('Versión cargada. Revísala y pulsa Publicar.'); }} onDefault={() => { setDraft(DEFAULT_PAGES[pageKey]); setVersions(false); toast('Texto original cargado. Pulsa Publicar para usarlo.'); }} />}
+    </div>
+  );
+}
+
+function FooterEditor({ onSaved }: { onSaved: (f: FooterContent) => void }) {
+  const toast = useToast();
+  const { draft, setDraft, dirty, busy, publish, discard } = useContent<FooterContent>('footer', DEFAULT_FOOTER);
+  const [view, setView] = useState<'edit' | 'preview'>('edit');
+  const [versions, setVersions] = useState(false);
+  const payload = useMemoPayload({ type: 'draft', page: 'footer', footer: draft });
+  if (!draft) return <Skeleton rows={4} h={56} />;
+  const set = (p: Partial<FooterContent>) => setDraft({ ...draft, ...p });
+  const bad = (u: string) => !!u.trim() && !/^https?:\/\//i.test(u.trim());
+  return (
+    <div className={`ad-ed ${view}`}>
+      <EdBar dirty={dirty} busy={busy} onPublish={async () => { if (await publish()) onSaved(draft); }} onDiscard={discard} onVersions={() => setVersions(true)} view={view} setView={setView} />
+      <div className="ad-ed-body">
+        <aside className="ad-ed-panel ad-card">
+          <h3>Pie de página y redes</h3>
+          <p className="ad-muted sm">Aparece abajo del todo, en todas las páginas de la web.</p>
+          <TextField label="Frase junto al ©" value={draft.tagline} onChange={(v) => set({ tagline: v })} />
+          <TextField label="Texto corto" hint="opcional, encima de los enlaces" rows={2} value={draft.note} onChange={(v) => set({ note: v })} />
+          <div className="ad-ed-sec-head"><strong>Redes sociales</strong><small className="ad-muted">deja vacío para ocultar</small></div>
+          {(['instagram', 'tiktok', 'facebook'] as const).map((k) => (
+            <label key={k} className="ad-field"><span>{k === 'tiktok' ? 'TikTok' : k.charAt(0).toUpperCase() + k.slice(1)}</span>
+              <input value={draft[k]} onChange={(e) => set({ [k]: e.target.value } as Partial<FooterContent>)} placeholder={`https://www.${k}.com/glowfit`} aria-invalid={bad(draft[k])} />
+              {bad(draft[k]) && <em className="ad-err">Pega el enlace completo, empezando por https://</em>}
+            </label>
+          ))}
+        </aside>
+        <PreviewFrame payload={payload} />
+      </div>
+      {versions && <VersionsModal<FooterContent> k="footer" onClose={() => setVersions(false)} onPick={(v) => { setDraft({ ...DEFAULT_FOOTER, ...v }); setVersions(false); toast('Versión cargada. Revísala y pulsa Publicar.'); }} onDefault={() => { setDraft(DEFAULT_FOOTER); setVersions(false); }} />}
+    </div>
+  );
+}
+
+function useMemoPayload<T>(p: T): T {
+  const json = JSON.stringify(p);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => p, [json]);
+}
 
 const DRAFT_KEY = 'gf-home-draft';
 const TYPE_HELP: Record<SectionType, string> = {
@@ -32,7 +274,7 @@ const sectionTitle = (s: Section) => {
   return (t || SECTION_LABELS[s.type]).replace(/\n/g, ' ');
 };
 
-export default function SiteEditor() {
+function HomeEditor({ footer }: { footer: FooterContent }) {
   const toast = useToast();
   const [draft, setDraft] = useState<HomeContent | null>(null);
   const [published, setPublished] = useState('');
@@ -75,8 +317,8 @@ export default function SiteEditor() {
 
   const send = useCallback(() => {
     if (!draft || !ready.current) return;
-    frame.current?.contentWindow?.postMessage({ type: 'draft', home: draft, products, selected }, window.location.origin);
-  }, [draft, products, selected]);
+    frame.current?.contentWindow?.postMessage({ type: 'draft', page: 'home', home: draft, products, selected, footer }, window.location.origin);
+  }, [draft, products, selected, footer]);
   useEffect(() => { send(); }, [send]);
   useEffect(() => {
     if (!draft) return;
