@@ -2,11 +2,11 @@ import type { Product } from './types';
 
 // Texto corto bajo el nombre (para qué sirve) y composición de packs.
 const EXTRA: Record<string, { tagline: string; badge?: string; includes?: string[] }> = {
-  glow: { tagline: 'Quemagrasas termogénico: activa el metabolismo y te ayuda a controlar tu peso.', badge: 'Favorito' },
-  bloom: { tagline: 'Drenante: ayuda a eliminar líquidos retenidos, hinchazón y pesadez.' },
-  'curcuma-y-curcumina': { tagline: 'Para mejores digestiones y una piel más luminosa. Con 95 % de curcumina.' },
-  'pack-glowxpro-bloom': { tagline: 'Quemagrasas + drenante: control de peso y menos hinchazón.', includes: ['glow', 'bloom'] },
-  'pack-silueta-perfecta': { tagline: 'Rutina completa: quema grasa, drena líquidos y mejora tus digestiones.', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
+  glow: { tagline: 'Tu impulso diario con yerba mate, té verde, café verde y cafeína.', badge: 'Favorito' },
+  bloom: { tagline: 'Tu aliado ligero después de las comidas, con alga kelp y vinagre de manzana.' },
+  'curcuma-y-curcumina': { tagline: 'Cúrcuma con 95 % de curcumina, pimienta negra y jengibre.' },
+  'pack-glowxpro-bloom': { tagline: 'GlowXpro + Bloom: las dos fórmulas favoritas, juntas.', includes: ['glow', 'bloom'] },
+  'pack-silueta-perfecta': { tagline: 'La rutina Glowfit completa: GlowXpro, Bloom y Cúrcuma.', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
 };
 
 export type ShopProduct = Product & {
