@@ -1,3 +1,4 @@
+import BlackFridayPromo from '@/components/BlackFridayPromo';
 import { notFound } from 'next/navigation';
 import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
@@ -75,6 +76,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <Price className="price big" cents={product.price_cents} />
             {product.compareAtCents && <s><Price cents={product.compareAtCents} /></s>}
             {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
+            {product.slug === 'pack-black-friday' && <span className="card-badge bf static">BLACK FRIDAY</span>}
           </div>
           <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
 
@@ -92,6 +94,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: cleanHtml(product.short_description) }} />}
 
           <AddToCart product={product} withQty />
+          <BlackFridayPromo exclude={product.slug} />
           <TrustBar variant="list" />
 
           <div className="product-details">

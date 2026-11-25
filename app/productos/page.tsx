@@ -3,6 +3,7 @@ import { media } from '@/lib/config';
 import { enrich } from '@/lib/shop';
 import ProductCard from '@/components/ProductCard';
 import TrustBar from '@/components/TrustBar';
+import BlackFridayPromo from '@/components/BlackFridayPromo';
 export const revalidate = 300;
 export const metadata = { title: 'Productos', description: 'Suplementos Glowfit: vitaminas y packs para tu rutina de bienestar. Envío a toda España.' };
 
@@ -21,6 +22,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
         <p className="shop-sub">Fórmulas que te acompañan por dentro y se reflejan por fuera.</p>
       </header>
       <div className="trust-band"><TrustBar /></div>
+      <div className="bf-wrap"><BlackFridayPromo /></div>
       <section className="page-section shop">
         <div className="shop-bar">
           <nav className="cat-filter" aria-label="Categorías">

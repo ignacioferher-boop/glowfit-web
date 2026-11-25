@@ -553,3 +553,18 @@ body:has(.hs-preview) .site-footer:not(.draft-footer) { display: none; }
 .review-reply { margin-top: 10px; padding: 10px 12px; background: var(--base); border-radius: 12px; font-size: .88rem; }
 .product-rating { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; color: var(--gris); text-decoration: none; }
 .product-rating .stars { color: #e2b33c; letter-spacing: 1px; }
+
+/* Black Friday */
+.card-badge.bf { background: #111; color: #fff; letter-spacing: .06em; }
+.bf-wrap { max-width: var(--wrap); margin: 24px auto 0; padding: 0 16px; }
+.bf-promo { display: flex; align-items: center; gap: 18px; background: #111; color: #f4f1ea; border-radius: var(--radius); padding: 14px 18px; margin: 18px 0; }
+.bf-img img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; display: block; }
+.bf-text { flex: 1; min-width: 0; }
+.bf-text p { margin: 0; }
+.bf-eyebrow { font-size: .78rem; letter-spacing: .18em; color: #d9c9a3; }
+.bf-title { font-size: 1.05rem; font-weight: 600; margin: 2px 0 !important; color: #fff; }
+.bf-price { font-size: 1.1rem; color: #fff; }
+.bf-price s { opacity: .6; font-size: .9em; margin-left: 4px; }
+.bf-price small { opacity: .7; font-size: .75em; }
+.bf-btn { background: #fff; color: #111; white-space: nowrap; font-size: 15px; }
+@media (max-width: 560px) { .bf-promo { flex-wrap: wrap; } .bf-btn { width: 100%; text-align: center; } }
