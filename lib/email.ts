@@ -6,6 +6,7 @@ type Item = { name: string | null; qty: number | null; total_cents: number | nul
 export type OrderMail = {
   order_number: number; name: string; email: string; phone?: string | null; tax_id?: string | null;
   address?: Record<string, string | null> | null; items: Item[]; shipping_cents: number; total_cents: number;
+  invoice_url?: string | null;
 };
 
 const eur = (c: number | null | undefined) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((c ?? 0) / 100);
@@ -104,7 +105,8 @@ ${label('Tu pedido')}${itemsTable(o)}
 <td width="50%" valign="top" style="padding-left:8px">${card(`${label('Entrega')}<p style="margin:0;font-size:14px;line-height:1.6">En <strong>2–4 días laborables</strong> a partir de hoy.<br>Te avisaremos por email al enviarlo.</p>`)}</td>
 </tr></table>
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>
-<p style="margin:10px 0 0;text-align:center;font-size:12px;color:${C.muted}">Necesitarás tu nº de pedido <strong>#${o.order_number}</strong> y este email.</p>`,
+<p style="margin:10px 0 0;text-align:center;font-size:12px;color:${C.muted}">Necesitarás tu nº de pedido <strong>#${o.order_number}</strong> y este email.</p>
+${o.invoice_url ? `<p style="margin:14px 0 0;text-align:center;font-size:13px"><a href="${esc(o.invoice_url)}" style="color:${C.green};font-weight:600">Descargar tu factura (PDF)</a></p>` : ''}`,
       footerNote: '¿Alguna duda con tu pedido? Responde a este email y te ayudamos encantados.',
     }),
   };
@@ -130,6 +132,40 @@ ${addr.length ? card(`${label('Enviamos a')}<p style="margin:0;font-size:14px;li
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>
 <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:${C.muted}">Puedes seguir el paquete en la web de ${esc(o.carrier)} con el número de arriba. Los plazos de entrega son orientativos y los gestiona la empresa de transporte; si hubiera algún retraso o incidencia, escríbenos y lo resolvemos con ellos. Más información en nuestras <a href="${SITE}/envios-y-entregas/" style="color:${C.muted}">condiciones de envío</a>.</p>`,
       footerNote: '¿Alguna duda con tu envío? Responde a este email y te ayudamos.',
+    }),
+  };
+}
+
+export function abandonedEmail(o: { name: string; url: string; items: { name: string; qty: number }[] }) {
+  const first = esc((o.name || '').split(' ')[0] || 'hola');
+  const list = o.items.map((i) => `<li style="margin:0 0 4px">${esc(i.qty)}× ${esc(i.name)}</li>`).join('');
+  return {
+    subject: `${(o.name || '').split(' ')[0] || 'Hola'}, tu pedido Glowfit te está esperando`,
+    html: layout({
+      preheader: 'Guardamos tu carrito para que puedas terminar la compra cuando quieras.',
+      eyebrow: 'Tu carrito', title: `¿Lo dejamos listo, ${first}?`,
+      intro: 'Vimos que empezaste un pedido pero no llegaste a terminarlo. Lo hemos guardado para que puedas retomarlo en un clic.',
+      body: `${list ? card(`${label('Tenías en tu carrito')}<ul style="margin:0;padding-left:18px;font-size:15px;line-height:1.6">${list}</ul>`) : ''}
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(o.url, 'Terminar mi compra')}</td></tr></table>
+<p style="margin:16px 0 0;text-align:center;font-size:12px;color:${C.muted}">Si ya no te interesa, ignora este email. No te enviaremos más recordatorios de este pedido.</p>`,
+      footerNote: 'Recibes este email porque aceptaste recibir comunicaciones de Glowfit. Puedes darte de baja respondiendo "BAJA".',
+    }),
+  };
+}
+
+export function reviewRequestEmail(o: { name: string; order_number: number; url: string; items: Item[] }) {
+  const first = esc((o.name || '').split(' ')[0] || 'hola');
+  const stars = [1, 2, 3, 4, 5].map((n) => `<a href="${esc(`${o.url}&r=${n}`)}" style="text-decoration:none;font-size:34px;color:#e2b33c;padding:0 3px">★</a>`).join('');
+  return {
+    subject: `${(o.name || '').split(' ')[0] || 'Hola'}, ¿qué tal tu pedido Glowfit?`,
+    html: layout({
+      preheader: 'Tu opinión nos ayuda muchísimo. Solo te llevará 30 segundos.',
+      eyebrow: `Pedido #${o.order_number}`, title: `¿Qué te ha parecido, ${first}?`,
+      intro: 'Esperamos que estés disfrutando de tu rutina Glowfit. ¿Nos cuentas tu experiencia? Tu opinión ayuda a otras personas a decidirse.',
+      body: `<p style="margin:0 0 6px;text-align:center;font-size:14px;color:${C.muted}">Pulsa en las estrellas</p>
+<p style="margin:0 0 18px;text-align:center">${stars}</p>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td>${button(o.url, 'Dejar mi opinión')}</td></tr></table>`,
+      footerNote: '¿Algún problema con tu pedido? Responde a este email y lo solucionamos.',
     }),
   };
 }

@@ -92,6 +92,12 @@ export async function POST(req: Request) {
     // Opción "Comprar como empresa": Stripe pide y valida el NIF/CIF para la factura
     tax_id_collection: { enabled: true },
     customer_creation: 'always',
+    // Factura en PDF automática (Stripe la envía y la guarda)
+    invoice_creation: { enabled: true, invoice_data: { description: 'Pedido en glowfit.group', footer: `${LEGAL.owner} · ${LEGAL.email}`, metadata: { site: 'glowfit' } } },
+    // Campo "Código promocional" en el pago
+    allow_promotion_codes: true,
+    // Si no paga a tiempo, Stripe guarda un enlace para retomar la compra (lo usamos en el email de carrito abandonado)
+    after_expiration: { recovery: { enabled: true, allow_promotion_codes: true } },
     billing_address_collection: 'auto',
     customer_email: email,
     shipping_options: [{

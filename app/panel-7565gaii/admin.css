@@ -520,3 +520,11 @@ body:has(.ad-root) { background: #f4efe7; }
 .ad-ship-info > span { flex: 1; word-break: break-all; }
 .ad-ship-info .ad-link { white-space: nowrap; }
 .ad-ship-form small.ad-error { display: block; margin: 6px 0 0; padding: 6px 10px; }
+.ad-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .ad-row2 { grid-template-columns: 1fr; } }
+.ad-code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .04em; background: #f4efe7; padding: 3px 8px; border-radius: 6px; }
+.ad-stars { color: #e2b33c; letter-spacing: 1px; white-space: nowrap; }
+.ad-review { display: flex; flex-direction: column; gap: 6px; }
+.ad-review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ad-list { display: flex; flex-direction: column; gap: 12px; }
+.ad-review .ad-note { background: #f4efe7; margin: 0; }

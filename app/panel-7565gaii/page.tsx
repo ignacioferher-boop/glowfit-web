@@ -11,8 +11,10 @@ import Customers from '@/components/admin/Customers';
 import Settings from '@/components/admin/Settings';
 import Inventory from '@/components/admin/Inventory';
 import SiteEditor from '@/components/admin/SiteEditor';
+import Promos from '@/components/admin/Promos';
+import ReviewsAdmin from '@/components/admin/ReviewsAdmin';
 
-type Tab = 'home' | 'orders' | 'products' | 'inventory' | 'editor' | 'customers' | 'settings';
+type Tab = 'home' | 'orders' | 'products' | 'inventory' | 'editor' | 'customers' | 'promos' | 'reviews' | 'settings';
 type G = 'shop' | 'catalog' | 'web' | 'account';
 const GROUPS: { k: G; l: string }[] = [{ k: 'shop', l: 'Ventas' }, { k: 'catalog', l: 'Catálogo' }, { k: 'web', l: 'Tu web' }, { k: 'account', l: 'Cuenta' }];
 // m = aparece en la barra inferior del móvil; s = nombre corto
@@ -20,6 +22,8 @@ const NAV: { k: Tab; l: string; s?: string; i: string; d: string; g: G; m?: bool
   { k: 'home', l: 'Resumen', i: 'home', d: 'Cómo va la tienda de un vistazo', g: 'shop', m: true },
   { k: 'orders', l: 'Pedidos', i: 'orders', d: 'Prepara, envía y sigue cada pedido', g: 'shop', m: true },
   { k: 'customers', l: 'Clientes', i: 'users', d: 'Quién te ha comprado y sus datos', g: 'shop' },
+  { k: 'promos', l: 'Descuentos', i: 'ticket', d: 'Códigos de descuento para tus clientes', g: 'shop' },
+  { k: 'reviews', l: 'Opiniones', i: 'star', d: 'Valoraciones de clientes y cuáles publicar', g: 'shop' },
   { k: 'products', l: 'Productos', i: 'box', d: 'Precios, fotos, textos y packs', g: 'catalog', m: true },
   { k: 'inventory', l: 'Inventario', s: 'Stock', i: 'stock', d: 'Botes, entradas y avisos de stock', g: 'catalog', m: true },
   { k: 'editor', l: 'Editar la web', i: 'layout', d: 'Textos, fotos y secciones de tu web', g: 'web' },
@@ -190,6 +194,8 @@ function App({ email }: { email: string }) {
           {tab === 'inventory' && <Inventory />}
           {tab === 'editor' && <SiteEditor onExit={() => go('home')} />}
           {tab === 'customers' && <Customers />}
+          {tab === 'promos' && <Promos />}
+          {tab === 'reviews' && <ReviewsAdmin />}
           {tab === 'settings' && <Settings email={email} />}
         </div>
       </main>

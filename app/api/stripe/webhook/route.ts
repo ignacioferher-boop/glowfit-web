@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
-import { customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
+import { abandonedEmail, customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
+import { allow } from '@/lib/ratelimit';
 import { getInventorySettings } from '@/lib/settings';
 
 export async function POST(req: Request) {
@@ -22,7 +23,9 @@ export async function POST(req: Request) {
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const s = event.data.object as Stripe.Checkout.Session;
-    const full = await stripe.checkout.sessions.retrieve(s.id, { expand: ['line_items'] });
+    const full = await stripe.checkout.sessions.retrieve(s.id, { expand: ['line_items', 'invoice'] });
+    const inv = full.invoice && typeof full.invoice === 'object' ? full.invoice : null;
+    const invoiceUrl = inv?.hosted_invoice_url || inv?.invoice_pdf || null;
     const shipping = full.collected_information?.shipping_details;
     const items = (full.line_items?.data || []).map((li) => ({
       name: li.description, qty: li.quantity, unit_cents: li.price?.unit_amount, total_cents: li.amount_total,
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
     // Emails de confirmación (solo una vez y solo si el pago está hecho)
     if (row && !row.email_sent && order.status === 'paid' && order.email) {
       const taxId = (full.customer_details?.tax_ids ?? []).map((t) => t.value).filter(Boolean).join(', ') || null;
-      const mail = { tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };
+      const mail = { invoice_url: invoiceUrl, tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };
       const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
       if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
       if (ok) await supabasePublic.rpc('mark_order_emailed', { p_secret: orderSecret, p_session: full.id });
@@ -68,6 +71,14 @@ export async function POST(req: Request) {
     const s = event.data.object as Stripe.Checkout.Session;
     await supabasePublic.rpc('attach_reservation', { p_secret: orderSecret, p_reservation: s.metadata?.reservation || null, p_session: s.id, p_release: true });
     revalidatePath('/', 'layout');
+    // Carrito abandonado: un único recordatorio, solo si aceptó comunicaciones y Stripe guardó el enlace para retomarlo
+    const url = s.after_expiration?.recovery?.url;
+    const email = s.customer_details?.email || s.customer_email;
+    if (event.type === 'checkout.session.expired' && url && email && s.metadata?.accepts_marketing === 'true' && (await allow(`recover:${email.toLowerCase()}`, 1, 7 * 86400))) {
+      let items: { name: string; qty: number }[] = [];
+      try { const li = await stripe.checkout.sessions.listLineItems(s.id, { limit: 20 }); items = li.data.map((l) => ({ name: l.description ?? '', qty: l.quantity ?? 1 })); } catch {}
+      await sendEmail(email, abandonedEmail({ name: s.metadata?.name || '', url, items }), process.env.ORDER_NOTIFY_EMAIL);
+    }
   }
   return NextResponse.json({ received: true });
 }

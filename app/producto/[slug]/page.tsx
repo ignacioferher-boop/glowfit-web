@@ -9,6 +9,8 @@ import AddToCart from '@/components/AddToCart';
 import ProductCard from '@/components/ProductCard';
 import TrustBar from '@/components/TrustBar';
 import { Price, CurrencyNote } from '@/components/currency';
+import Reviews, { RatingSummary } from '@/components/Reviews';
+import { avgRating, getReviews } from '@/lib/reviews';
 
 export const revalidate = 300;
 
@@ -32,11 +34,28 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const related = [...all.filter((p) => p.slug !== slug && p.category === product.category), ...all.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
   const save = product.compareAtCents ? product.compareAtCents - product.price_cents : 0;
   const isPack = product.includes.length > 0;
+  const reviews = await getReviews(slug);
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || 'https://glowfit.group').replace(/\/$/, '');
   const longDesc = product.description && product.description !== product.short_description && !isPack ? product.description : null;
   const jsonLd = {
     '@context': 'https://schema.org', '@type': 'Product', name: product.name, image: product.images,
     description: product.tagline ?? undefined, brand: { '@type': 'Brand', name: 'Glowfit' },
-    offers: { '@type': 'Offer', priceCurrency: 'EUR', price: (product.price_cents / 100).toFixed(2), availability: product.available === 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' },
+    sku: product.slug, url: `${site}/producto/${product.slug}/`,
+    offers: {
+      '@type': 'Offer', url: `${site}/producto/${product.slug}/`, priceCurrency: 'EUR', price: (product.price_cents / 100).toFixed(2), itemCondition: 'https://schema.org/NewCondition',
+      availability: product.available === 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'Glowfit' },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails', shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ES' },
+        shippingRate: { '@type': 'MonetaryAmount', currency: 'EUR', value: (product.price_cents >= SHIPPING.freeFromCents && SHIPPING.freeFromCents > 0 ? 0 : SHIPPING.standardCents / 100).toFixed(2) },
+        deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: SHIPPING.minDays, maxValue: SHIPPING.maxDays, unitCode: 'DAY' } },
+      },
+      hasMerchantReturnPolicy: { '@type': 'MerchantReturnPolicy', applicableCountry: 'ES', returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow', merchantReturnDays: 14, returnMethod: 'https://schema.org/ReturnByMail' },
+    },
+    ...(reviews.length ? {
+      aggregateRating: { '@type': 'AggregateRating', ratingValue: avgRating(reviews), reviewCount: reviews.length },
+      review: reviews.slice(0, 5).map((r) => ({ '@type': 'Review', author: { '@type': 'Person', name: r.name }, datePublished: r.created_at.slice(0, 10), reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 }, ...(r.body ? { reviewBody: r.body } : {}) })),
+    } : {}),
   };
   return (
     <section className="page-section product-page">
@@ -51,6 +70,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {product.catLabel && <p className="kiona card-cat">{product.catLabel.toUpperCase()}</p>}
           <h1>{product.name}</h1>
           {product.tagline && <p className="product-tagline">{product.tagline}</p>}
+          <RatingSummary reviews={reviews} />
           <div className="price-row">
             <Price className="price big" cents={product.price_cents} />
             {product.compareAtCents && <s><Price cents={product.compareAtCents} /></s>}
@@ -96,6 +116,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </div>
+      <Reviews reviews={reviews} />
       {related.length > 0 && (
         <div className="related">
           <p className="kiona section-eyebrow center">COMPLETA TU RUTINA</p>
