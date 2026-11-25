@@ -6,6 +6,7 @@ const EXTRA: Record<string, { tagline: string; badge?: string; includes?: string
   bloom: { tagline: 'Tu aliado ligero después de las comidas, con alga kelp y vinagre de manzana.' },
   'curcuma-y-curcumina': { tagline: 'Cúrcuma con 95 % de curcumina, pimienta negra y jengibre.' },
   'pack-glowxpro-bloom': { tagline: 'GlowXpro + Bloom: las dos fórmulas favoritas, juntas.', includes: ['glow', 'bloom'] },
+  'pack-black-friday': { tagline: 'Oferta Black Friday: GlowXpro + Bloom a precio especial.', includes: ['glow', 'bloom'] },
   'pack-silueta-perfecta': { tagline: 'La rutina Glowfit completa: GlowXpro, Bloom y Cúrcuma.', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
 };
 
