@@ -57,12 +57,31 @@ function Login() {
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<'password' | 'link'>('password');
+  const [sent, setSent] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg('');
-    const { error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
-    if (error) setMsg('El email o la contraseña no son correctos.');
+    if (mode === 'link') {
+      // Enlace de un solo uso al email (caduca en 1 hora). Solo entra si el email es administrador.
+      const { error } = await sb().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/panel-7565gaii/` } });
+      if (error) setMsg(error.status === 429 ? 'Has pedido muchos enlaces. Espera unos minutos.' : 'No se pudo enviar el enlace. Revisa el email.');
+      else setSent(true);
+    } else {
+      const { error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
+      if (error) setMsg('El email o la contraseña no son correctos.');
+    }
     setBusy(false);
   }
+  if (sent) return (
+    <div className="ad-login-bg" style={{ backgroundImage: `url(${media('2026/05/FONDO-COLOR-scaled.png')})` }}>
+      <div className="ad-login ad-rise">
+        <Brand />
+        <h1>Revisa tu correo</h1>
+        <p className="ad-muted">Te hemos enviado un enlace de acceso a <strong>{email}</strong>. Solo funciona una vez y caduca en 1 hora.</p>
+        <button className="ad-btn full" onClick={() => setSent(false)}>Volver</button>
+      </div>
+    </div>
+  );
   return (
     <div className="ad-login-bg" style={{ backgroundImage: `url(${media('2026/05/FONDO-COLOR-scaled.png')})` }}>
       <form className="ad-login ad-rise" onSubmit={submit}>
@@ -70,12 +89,13 @@ function Login() {
         <h1>Panel de la tienda</h1>
         <p className="ad-muted">Entra para gestionar pedidos, productos y clientes.</p>
         <label className="ad-field"><span>Email</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-        <label className="ad-field"><span>Contraseña</span>
+        {mode === 'password' && <label className="ad-field"><span>Contraseña</span>
           <span className="ad-input-icon"><input type={show ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}><Icon name={show ? 'eyeoff' : 'eye'} /></button></span>
-        </label>
+        </label>}
         {msg && <p className="ad-error" role="alert">{msg}</p>}
-        <button className="ad-btn primary full lg" disabled={busy}>{busy ? <span className="ad-spinner sm" /> : 'Entrar'}</button>
+        <button className="ad-btn primary full lg" disabled={busy}>{busy ? <span className="ad-spinner sm" /> : mode === 'link' ? 'Enviarme un enlace de acceso' : 'Entrar'}</button>
+        <button type="button" className="ad-btn ghost full" onClick={() => { setMode(mode === 'link' ? 'password' : 'link'); setMsg(''); }}>{mode === 'link' ? 'Entrar con contraseña' : 'Entrar sin contraseña (enlace al email)'}</button>
         <p className="ad-muted sm">¿Necesitas acceso? Pide que añadan tu email como administrador.</p>
       </form>
     </div>
