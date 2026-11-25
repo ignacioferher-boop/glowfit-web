@@ -55,7 +55,7 @@ export default function Preview() {
     <div className="hs-preview" ref={root} onClickCapture={onClick}>
       {d.page === 'home' && d.home && (
         <>
-          {a?.enabled && a.text.trim() && <p className="announce draft" style={{ margin: 0 }}>{a.text}</p>}
+          {a?.enabled && a.text.trim() && <p className={`announce draft${a.color && a.color !== 'verde' ? ` ${a.color}` : ''}`} style={{ margin: 0 }}>{a.text}</p>}
           <HomeSections sections={d.home.sections} products={d.products ?? []} editable />
         </>
       )}

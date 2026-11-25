@@ -433,6 +433,9 @@ function HomeEditor({ footer }: { footer: FooterContent }) {
               <label className="ad-switch-row big"><Switch on={draft.announcement.enabled} onChange={(v) => setDraft({ ...draft, announcement: { ...draft.announcement, enabled: v } })} label="Mostrar barra de aviso" /><span>{draft.announcement.enabled ? 'Se muestra' : 'No se muestra'}</span></label>
               <TextField label="Texto" value={draft.announcement.text} max={90} onChange={(v) => setDraft({ ...draft, announcement: { ...draft.announcement, text: v } })} />
               <LinkField value={draft.announcement.link} onChange={(v) => setDraft({ ...draft, announcement: { ...draft.announcement, link: v } })} />
+              <div className="ad-field"><span>Color</span>
+                <div className="ad-seg">{(['verde', 'negro', 'naranja'] as const).map((c) => <button type="button" key={c} className={(draft.announcement.color ?? 'verde') === c ? 'active' : ''} onClick={() => setDraft({ ...draft, announcement: { ...draft.announcement, color: c } })}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>)}</div>
+              </div>
             </>
           )}
 
@@ -605,7 +608,7 @@ function SectionForm({ s, products, onChange }: { s: Section; products: ShopProd
         <TextField label="Título" value={s.title} onChange={(v) => onChange({ title: v })} />
         <TextField label="Texto" rows={2} value={s.body} onChange={(v) => onChange({ body: v })} />
         <div className="ad-field"><span>Color</span>
-          <div className="ad-seg">{(['verde', 'naranja', 'crema'] as const).map((c) => <button type="button" key={c} className={s.color === c ? 'active' : ''} onClick={() => onChange({ color: c })}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>)}</div>
+          <div className="ad-seg">{(['verde', 'naranja', 'crema', 'negro'] as const).map((c) => <button type="button" key={c} className={s.color === c ? 'active' : ''} onClick={() => onChange({ color: c })}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>)}</div>
         </div>
         <TextField label="Texto del botón" hint="vacío = sin botón" value={s.button_text} onChange={(v) => onChange({ button_text: v })} />
         {s.button_text && <LinkField label="El botón lleva a" value={s.button_link} onChange={(v) => onChange({ button_link: v })} />}

@@ -8,10 +8,10 @@ export type ProductsSection = Base & { type: 'products'; eyebrow: string; title:
 export type TextImageSection = Base & { type: 'text_image'; title: string; body: string; image: string; reverse: boolean; button_text?: string; button_link?: string };
 export type TextSection = Base & { type: 'text'; title: string; body: string; align: 'left' | 'center' };
 export type ImageSection = Base & { type: 'image'; image: string; caption: string; link: string; wide: boolean };
-export type BannerSection = Base & { type: 'banner'; title: string; body: string; button_text: string; button_link: string; color: 'verde' | 'naranja' | 'crema' };
+export type BannerSection = Base & { type: 'banner'; title: string; body: string; button_text: string; button_link: string; color: 'verde' | 'naranja' | 'crema' | 'negro' };
 export type Section = HeroSection | ProductsSection | TextImageSection | TextSection | ImageSection | BannerSection;
 
-export type Announcement = { enabled: boolean; text: string; link: string };
+export type Announcement = { enabled: boolean; text: string; link: string; color?: 'verde' | 'negro' | 'naranja' };
 export type HomeContent = { sections: Section[]; announcement: Announcement };
 
 export const SECTION_LABELS: Record<SectionType, string> = {
