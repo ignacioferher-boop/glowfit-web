@@ -272,7 +272,9 @@ function Home({ st, setSt, reload, env: e, bip, onInstall }: { st: State; setSt:
         <div>
           <em>Tu guía</em>
           <h2>Tu momento, cada día</h2>
-          {st.has_guide
+          {st.has_guide && !e.standalone
+            ? <><p className="gf-muted sm">Para abrir tu guía, primero instala la app en tu móvil y ábrela desde su icono.</p>{bip ? <button className="gf-btn sm" onClick={onInstall}>Instalar la app</button> : <p className="gf-muted sm"><strong>{e.android ? 'Menú ⋮ → «Instalar aplicación».' : 'Ábrela desde tu móvil e instálala.'}</strong></p>}</>
+            : st.has_guide
             ? <><p className="gf-muted sm">Hábitos, ideas y planes sencillos para acompañarte.</p><a className="gf-btn sm" href="/api/app/guia/" target="_blank" rel="noopener">Abrir la guía</a></>
             : <><p className="gf-muted sm">Disponible con la compra de cualquier producto Glowfit o de la guía.</p><a className="gf-btn ghost sm" href="/productos/">Ver productos</a></>}
         </div>

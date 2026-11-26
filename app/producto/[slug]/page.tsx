@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
             {(product.slug === 'pack-black-friday' || guideGiftActive()) && <span className="card-badge bf static">{product.slug === 'pack-black-friday' ? 'BLACK FRIDAY' : 'BLACK FRIDAY · 🎁 GUÍA DE REGALO'}</span>}
           </div>
-          <p className="tax-note">IVA incluido{isFreeShipping(product.slug) ? ' · Envío gratis' : isDigital(product.slug) ? ' · Producto digital: lo recibes al momento en tu email y en tu app Glowfit' : SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
+          <p className="tax-note">IVA incluido{isFreeShipping(product.slug) ? ' · Envío gratis' : isDigital(product.slug) ? ' · Producto digital: lo tienes al momento en tu app Glowfit' : SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
 
           {isPack && (
             <div className="pack-includes">

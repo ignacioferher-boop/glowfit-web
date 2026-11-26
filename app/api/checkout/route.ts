@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     })),
     ...(digitalOnly ? {} : { shipping_address_collection: { allowed_countries: ['ES'] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] } }),
     // Contenido digital: aviso legal de entrega inmediata (art. 103 m LGDCU)
-    ...(hasDigital ? { custom_text: { submit: { message: 'La guía en PDF se entrega al momento por email. Al pagar aceptas su entrega inmediata y que, por ser contenido digital, no se puede devolver una vez enviada.' } } } : {}),
+    ...(hasDigital ? { custom_text: { submit: { message: 'La guía se entrega al momento dentro de la app Glowfit (te enviamos tu código por email). Al pagar aceptas su entrega inmediata y que, por ser contenido digital, no se puede devolver una vez enviada.' } } } : {}),
     // Opción "Comprar como empresa": Stripe pide y valida el NIF/CIF para la factura
     tax_id_collection: { enabled: true },
     customer_creation: 'always',

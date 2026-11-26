@@ -97,10 +97,10 @@ export function customerEmail(o: OrderMail) {
   return {
     subject: `¡Pedido #${o.order_number} confirmado! · Glowfit`,
     html: layout({
-      preheader: o.digital_only ? `Tu guía ya está lista para descargar. Pedido #${o.order_number}.` : `Hemos recibido tu pedido #${o.order_number} por ${eur(o.total_cents)}. Ya lo estamos preparando.`,
+      preheader: o.digital_only ? `Tu guía te espera en la app Glowfit. Pedido #${o.order_number}.` : `Hemos recibido tu pedido #${o.order_number} por ${eur(o.total_cents)}. Ya lo estamos preparando.`,
       eyebrow: `Pedido #${o.order_number}`,
       title: `¡Gracias, ${first}!`,
-      intro: o.digital_only ? 'Gracias por tu compra. Aquí tienes tu guía para descargarla ahora mismo.' : 'Hemos recibido tu pedido y ya lo estamos preparando con mimo. Te avisaremos en cuanto salga hacia tu casa.',
+      intro: o.digital_only ? 'Gracias por tu compra. Tu guía está en la app Glowfit: en el siguiente email te llega tu código para descargarla.' : 'Hemos recibido tu pedido y ya lo estamos preparando con mimo. Te avisaremos en cuanto salga hacia tu casa.',
       body: `${o.digital_only ? '' : steps(0)}
 ${label('Tu pedido')}${itemsTable(o)}
 ${o.digital_only ? '' : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -113,8 +113,8 @@ ${o.invoice_url ? `<p style="margin:14px 0 0;text-align:center;font-size:13px"><
 ${o.guide_url ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0"><tr><td bgcolor="${C.cream}" style="background:${C.cream};border-radius:16px;padding:22px 22px;text-align:center">
 <p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.olive};font-weight:700">${o.guide_bought ? '📘 Tu guía' : '🎁 Tu regalo'}</p>
 <p style="margin:0 0 8px;font-family:${SERIF};font-size:22px;color:${C.green}">Guía «Tu momento, cada día»</p>
-<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${C.text}">Ideas sencillas de alimentación, descanso y hábitos para acompañar tu rutina Glowfit. ${o.digital_only ? 'Ya puedes descargarla. También la tienes dentro de tu app Glowfit.' : 'Ya puedes descargarla, aunque tu pedido aún no haya llegado.'}</p>
-${button(o.guide_url, 'Descargar mi guía (PDF)')}</td></tr></table>` : ''}`,
+<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${C.text}">Ideas sencillas de alimentación, descanso y hábitos para acompañar tu rutina Glowfit. Está dentro de la <strong>app Glowfit</strong>: descárgala en tu móvil con el código personal que te enviamos en el siguiente email y ábrela desde su icono.</p>
+${button(`${SITE}/app/`, 'Descargar la app Glowfit')}</td></tr></table>` : ''}`,
       footerNote: '¿Alguna duda con tu pedido? Responde a este email y te ayudamos encantados.',
     }),
   };
@@ -294,7 +294,7 @@ export function followupEmail(o: { subject: string; body: string; url: string; s
       body: `<div style="font-size:15px;line-height:1.7;color:${C.text}">${paras(o.body)}</div>
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:8px auto 0"><tr><td>${button(o.url, 'Contestar a Glowfit')}</td></tr></table>
 <p style="margin:12px 0 0;text-align:center;font-size:12px;color:${C.muted}">También puedes responder directamente a este email.</p>
-${o.guideUrl ? `<p style="margin:22px 0 0;text-align:center;font-size:13px;color:${C.muted}">PD: ¿Ya has abierto tu guía «Tu momento, cada día»? <a href="${esc(o.guideUrl)}" style="color:${C.green};font-weight:600">Descárgala aquí</a>.</p>` : ''}`,
+${o.guideUrl ? `<p style="margin:22px 0 0;text-align:center;font-size:13px;color:${C.muted}">PD: ¿Ya has abierto tu guía «Tu momento, cada día»? La tienes en tu app Glowfit. <a href="${SITE}/app/" style="color:${C.green};font-weight:600">Abrir la app</a>.</p>` : ''}`,
       footerNote: `Te escribimos porque compraste en Glowfit y queremos saber cómo te va. <a href="${esc(o.stopUrl)}" style="color:${C.muted}">No quiero recibir más mensajes de seguimiento</a>.`,
     }),
   };

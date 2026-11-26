@@ -6,7 +6,7 @@ export default function GiftGuide({ variant = 'band' }: { variant?: 'band' | 'co
   if (variant === 'compact') return (
     <div className="gift-compact" role="note">
       <img src="/img/guia-portada.webp" alt="" width={46} height={65} />
-      <p><span className="gift-compact-eyebrow">BLACK FRIDAY · REGALO INCLUIDO</span><strong>Guía de bienestar «Tu momento, cada día»</strong> gratis con este pedido. 36 páginas en PDF que te llegan al momento en tu email.</p>
+      <p><span className="gift-compact-eyebrow">BLACK FRIDAY · REGALO INCLUIDO</span><strong>Guía de bienestar «Tu momento, cada día»</strong> gratis con este pedido. 36 páginas que tendrás en tu app Glowfit: te enviamos el código para descargarla al momento.</p>
     </div>
   );
   return (
@@ -19,7 +19,7 @@ export default function GiftGuide({ variant = 'band' }: { variant?: 'band' | 'co
           <p className="gift-lead">36 páginas para cuidarte sin agobios: cómo encajar tu rutina Glowfit, ideas de alimentación, agua, descanso, movimiento y pequeños hábitos que se quedan. Sin dietas imposibles ni órdenes: opciones reales para tu día a día.</p>
           <ul className="gift-points">
             <li>Con <strong>cualquier pedido</strong>, sin importe mínimo</li>
-            <li>La recibes al momento en tu email de confirmación</li>
+            <li>La tienes al momento en tu app Glowfit (te enviamos tu código por email)</li>
             <li>Solo esta semana de Black Friday</li>
           </ul>
           <a className="btn gift-btn" href="/productos/">Elegir mi producto</a>
