@@ -14,21 +14,26 @@ export async function POST(req: Request) {
   const stripe = new Stripe(secret);
 
   const raw = await req.text();
+  const sig = req.headers.get('stripe-signature') || '';
   let event: Stripe.Event;
+  let isThin = false;
+  try { isThin = JSON.parse(raw)?.object === 'v2.core.event'; } catch {}
   try {
-    event = stripe.webhooks.constructEvent(raw, req.headers.get('stripe-signature') || '', whsec);
-  } catch {
+    if (isThin) {
+      // Destinos con carga "Breve" (thin events): tipo "v1.checkout.session.*" y solo el id de la sesión.
+      // Se verifica la firma igual y se pide la sesión completa a Stripe.
+      const n = stripe.parseEventNotification(raw, sig, whsec) as unknown as { type: string; related_object?: { id?: string } };
+      const type = n.type.replace(/^v1\./, '');
+      const id = n.related_object?.id;
+      if (!type.startsWith('checkout.session.') || !id) return NextResponse.json({ received: true });
+      const session = await stripe.checkout.sessions.retrieve(id);
+      event = { type, data: { object: session } } as unknown as Stripe.Event;
+    } else {
+      event = stripe.webhooks.constructEvent(raw, sig, whsec);
+    }
+  } catch (e) {
+    console.error('webhook: firma o evento no válido', (e as Error)?.message);
     return NextResponse.json({ error: 'firma no válida' }, { status: 400 });
-  }
-  // Destinos con carga "Breve" (thin events): el tipo llega como "v1.checkout.session.completed"
-  // y solo traen el id de la sesión, así que la pedimos a Stripe (ya firmada y verificada arriba).
-  const thin = event as unknown as { object?: string; type: string; related_object?: { id?: string } };
-  if (thin.object === 'v2.core.event' || thin.type.startsWith('v1.')) {
-    const type = thin.type.replace(/^v1\./, '');
-    const id = thin.related_object?.id;
-    if (!type.startsWith('checkout.session.') || !id) return NextResponse.json({ received: true });
-    const session = await stripe.checkout.sessions.retrieve(id);
-    event = { ...(event as object), type, data: { object: session } } as unknown as Stripe.Event;
   }
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
