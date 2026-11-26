@@ -41,7 +41,7 @@ export const DEFAULT_HOME: HomeContent = {
     },
     {
       id: 'suplementos', type: 'text_image', title: 'SUPLEMENTOS CREADOS PARA TU BIENESTAR', reverse: true, image: media('2026/06/FOTOS-CUADRADA-2.png'),
-      body: 'Nuestra línea de suplementos combina ingredientes cuidadosamente seleccionados y fórmulas desarrolladas para acompañarte en tu día a día.\n\nDesde fórmulas pensadas para acompañar tus objetivos de bienestar y tu rutina activa, hasta complementos destinados al cuidado digestivo, la belleza y el equilibrio del organismo.\n\nCada producto Glowfit nace con un mismo propósito: ayudarte a cuidar de ti, sentirte bien y mantener un estilo de vida saludable.',
+      body: 'Nuestra línea de suplementos combina ingredientes cuidadosamente seleccionados y fórmulas desarrolladas para acompañarte en tu día a día.\n\nDesde fórmulas pensadas para complementar tus objetivos de control de peso y bienestar, hasta complementos destinados al cuidado digestivo, la belleza y el equilibrio del organismo.\n\nCada producto Glowfit nace con un mismo propósito: ayudarte a cuidar de ti, sentirte bien y mantener un estilo de vida saludable.',
     },
   ],
 };
