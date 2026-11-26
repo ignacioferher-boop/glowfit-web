@@ -1,0 +1,14 @@
+{
+  "name": "Glowfit · Panel",
+  "short_name": "Glowfit Panel",
+  "start_url": "/panel-7565gaii/",
+  "scope": "/panel-7565gaii/",
+  "display": "standalone",
+  "background_color": "#f4efe7",
+  "theme_color": "#464e34",
+  "icons": [
+    { "src": "/img/panel-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/panel-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/panel-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

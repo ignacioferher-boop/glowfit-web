@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING } from '@/lib/config';
 import { useCurrency, CurrencyNote } from '@/components/currency';
+import GiftGuide from '@/components/GiftGuide';
 
 export default function Carrito() {
   const { items, setQty, remove, subtotal, notice, sync } = useCart();
@@ -108,6 +109,7 @@ export default function Carrito() {
         <p className="total"><span>Total</span><span>{money(subtotal + shipping)}</span></p>
         <CurrencyNote eurCents={subtotal + shipping} />
         <p className="tax-note">IVA incluido. Entrega en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables.</p>
+        <GiftGuide variant="compact" />
       </div>
 
       <form className="checkout-form" onSubmit={(e) => { e.preventDefault(); setTouched({ name: true, email: true, phone: true }); if (!accept) { setError('Para continuar, acepta las condiciones de contratación.'); return; } if (valid) checkout(); }} noValidate>

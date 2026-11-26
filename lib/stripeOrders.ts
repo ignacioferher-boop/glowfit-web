@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache';
 import type Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
 import { guideGiftActive, guideUrl } from './guide';
+import { notifyAdmins } from './push';
 import { customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
 import { getInventorySettings } from '@/lib/settings';
 
@@ -46,6 +47,9 @@ export async function recordPaidSession(stripe: Stripe, sessionId: string, order
       const mail = { invoice_url: invoiceUrl, tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents, guide_url: guideGiftActive() ? guideUrl(row.order_number) : null };
       const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
       if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
+      // Aviso al móvil de los administradores (si lo tienen activado). Nunca bloquea el pedido.
+      const units = items.reduce((n: number, i: { qty?: number | null }) => n + (i.qty ?? 0), 0);
+      await notifyAdmins({ title: `🛍️ Nuevo pedido #${row.order_number} · ${(order.total_cents / 100).toFixed(2).replace('.', ',')} €`, body: `${order.name || order.email} · ${units} ${units === 1 ? 'producto' : 'productos'}`, tag: `order-${row.order_number}` });
       if (!ok) await supabasePublic.rpc('unclaim_order_email', { p_secret: orderSecret, p_session: full.id }); // se reintentará
       // Aviso de stock bajo a la tienda (una vez por pedido)
       const inv = await getInventorySettings();

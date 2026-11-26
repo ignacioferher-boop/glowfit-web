@@ -581,3 +581,24 @@ body:has(.hs-preview) .site-footer:not(.draft-footer) { display: none; }
 .fu-who { font-size: .78rem; opacity: .7; }
 .fu-bubble { white-space: pre-wrap; padding: 14px 16px; border-radius: 16px; line-height: 1.65; background: #f8f2ea; text-align: left; }
 .fu-thread li.me .fu-bubble { background: #e9eddf; }
+
+/* Regalo guía Black Friday */
+.gift-band { background: #111; color: #f4f1ea; padding: 48px 16px; }
+.gift-inner { max-width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: 260px 1fr; gap: 44px; align-items: center; }
+.gift-cover img { width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 24px 48px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06); transform: rotate(-3deg); }
+.gift-eyebrow { font-size: .8rem; letter-spacing: .2em; color: #d9c9a3; margin: 0 0 10px; }
+.gift-title { font-family: var(--heading, Georgia, serif); font-weight: 400; font-size: clamp(1.6rem, 3.4vw, 2.4rem); line-height: 1.15; margin: 0 0 14px; color: #fff; }
+.gift-title em { color: #d9c9a3; }
+.gift-lead { margin: 0 0 16px; opacity: .9; line-height: 1.65; max-width: 60ch; }
+.gift-points { margin: 0 0 22px; padding: 0; list-style: none; display: grid; gap: 6px; }
+.gift-points li::before { content: '✓'; color: #d9c9a3; margin-right: 10px; font-weight: 700; }
+.gift-btn { background: #f4f1ea !important; color: #111 !important; border-color: #f4f1ea !important; }
+@media (max-width: 760px) {
+  .gift-band { padding: 36px 16px; }
+  .gift-inner { grid-template-columns: 1fr; gap: 24px; text-align: center; }
+  .gift-cover { max-width: 180px; margin: 0 auto; }
+  .gift-points { justify-items: center; }
+}
+.gift-compact { display: flex; gap: 14px; align-items: center; background: #f8f2ea; border: 1px dashed #c2a990; border-radius: var(--radius, 14px); padding: 12px 14px; margin: 14px 0; }
+.gift-compact img { width: 46px; height: auto; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.15); flex: none; }
+.gift-compact p { margin: 0; font-size: .92rem; line-height: 1.5; }

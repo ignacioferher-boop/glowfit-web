@@ -3,6 +3,7 @@ import { supabasePublic } from '@/lib/data';
 import { validFollowupToken } from '@/lib/followup';
 import { followupNewReplyShopEmail, sendEmail } from '@/lib/email';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
+import { notifyAdmins } from '@/lib/push';
 
 // El cliente contesta al seguimiento (o pide no recibir más) desde el enlace firmado del email.
 export async function POST(req: Request) {
@@ -23,12 +24,13 @@ export async function POST(req: Request) {
   const { data, error } = await supabasePublic.rpc('followup_reply', { p_secret: secret, p_order: o, p_body: body });
   if (error || data !== true) { if (error) console.error('followup_reply', error.message); return NextResponse.json({ error: 'No se pudo enviar. Inténtalo más tarde.' }, { status: 500 }); }
 
-  // Aviso a la tienda
+  // Aviso a la tienda (email y notificación al móvil)
   const notify = process.env.ORDER_NOTIFY_EMAIL;
-  if (notify) {
-    const { data: th } = await supabasePublic.rpc('followup_thread', { p_secret: secret, p_order: o });
-    const row = Array.isArray(th) ? th[0] : null;
-    if (row) await sendEmail(notify, followupNewReplyShopEmail({ name: row.name || '', email: '', order_number: row.order_number, body })).catch(() => false);
+  const { data: th } = await supabasePublic.rpc('followup_thread', { p_secret: secret, p_order: o });
+  const row = Array.isArray(th) ? th[0] : null;
+  if (row) {
+    if (notify) await sendEmail(notify, followupNewReplyShopEmail({ name: row.name || '', email: '', order_number: row.order_number, body })).catch(() => false);
+    await notifyAdmins({ title: `💬 ${(row.name || 'Un cliente').split(' ')[0]} te ha escrito`, body: body.slice(0, 140), tag: `fu-${o}` });
   }
   return NextResponse.json({ ok: true });
 }

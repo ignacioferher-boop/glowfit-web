@@ -4,6 +4,7 @@ import { sb } from '@/lib/supabase-browser';
 import { SHIPPING } from '@/lib/config';
 import { Icon, eur, useToast } from './ui';
 import BackupCard from './BackupCard';
+import NotifyCard from './NotifyCard';
 
 export default function Settings({ email }: { email: string }) {
   const toast = useToast();
@@ -23,6 +24,7 @@ export default function Settings({ email }: { email: string }) {
   }
   return (
     <div className="ad-settings">
+      <NotifyCard />
       <section className="ad-card ad-rise">
         <h3><Icon name="lock" />Tu cuenta</h3>
         <p className="ad-muted">Has entrado como <strong>{email}</strong>.</p>
