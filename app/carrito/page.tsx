@@ -1,12 +1,14 @@
 'use client';
 import { emailSuggestion, normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING, onlyTestProduct } from '@/lib/config';
 import { useCurrency, CurrencyNote } from '@/components/currency';
 
 export default function Carrito() {
-  const { items, setQty, remove, subtotal } = useCart();
+  const { items, setQty, remove, subtotal, notice, sync } = useCart();
+  // Al abrir el carrito, comprueba stock y precios actuales
+  useEffect(() => { sync(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { format: money } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +47,7 @@ export default function Carrito() {
         data.unavailable.forEach((slug: string) => remove(slug));
         throw new Error('Hemos quitado de tu carrito un producto que ya no está disponible. Revisa el total y vuelve a pulsar «Continuar al pago».');
       }
+      if (res.status === 409) sync(); // stock cambiado: ajusta el carrito
       if (!res.ok || !data.url) throw new Error(data.error || 'No se pudo iniciar el pago');
       window.location.href = data.url;
     } catch (e) {
@@ -58,6 +61,7 @@ export default function Carrito() {
       <section className="page-section narrow center cart-empty">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17" cy="20" r="1.3" /></svg>
         <h1 className="section-title">TU CARRITO</h1>
+      {notice && <p className="cart-notice" role="status">{notice}</p>}
         <p className="script mid-script">Todavía está vacío</p>
         <p>Descubre nuestras fórmulas y empieza tu rutina Glowfit.</p>
         <a className="btn" href="/productos/">Ver productos</a>
@@ -67,6 +71,7 @@ export default function Carrito() {
   return (
     <section className="page-section cart-page">
       <h1 className="section-title">TU CARRITO</h1>
+      {notice && <p className="cart-notice" role="status">{notice}</p>}
       <ol className="steps" aria-label="Pasos de la compra">
         <li className="on">Carrito</li><li className="on">Tus datos</li><li>Pago seguro</li>
       </ol>
