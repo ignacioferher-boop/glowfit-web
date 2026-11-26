@@ -136,3 +136,7 @@ body:has(.gf-app) { background: var(--gf-bg, #f8f2ea); }
 .gf-addmock .mid img { width: 36px; height: 36px; border-radius: 9px; }
 .gf-scene.on .gf-tap { animation: gf-tap 1.3s ease-in-out .5s infinite; border-radius: 10px; }
 @keyframes gf-tap { 0%, 100% { box-shadow: 0 0 0 0 rgba(216,97,60,0); } 40% { box-shadow: 0 0 0 4px rgba(216,97,60,.55); } }
+.gf-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 10px 4px 0; }
+.gf-days button { min-height: 40px; border-radius: 12px; border: 1px solid var(--gf-line); background: #fff; cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--gf-muted); }
+.gf-days button.today { color: var(--gf-green); border-color: var(--gf-olive); }
+.gf-days button.on { background: var(--gf-green); border-color: var(--gf-green); color: #fff; }

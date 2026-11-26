@@ -3,12 +3,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { media } from '@/lib/config';
 
 type Item = { id: string; text: string };
-type Content = { id: string; kind: 'receta' | 'entrenamiento' | 'tip'; title: string; summary: string | null; body: string | null; image_url: string | null };
+type Content = { id: string; kind: 'receta' | 'entrenamiento' | 'tip'; title: string; summary: string | null; body: string | null; image_url: string | null; day?: number | null; meal?: string | null };
 type State = { auth: true; name: string | null; has_guide: boolean; day: string; checklist: Item[]; done: string[]; week: { day: string; n: number }[]; content: Content[] };
 type BIP = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
 const KINDS: { k: 'all' | Content['kind']; l: string }[] = [{ k: 'all', l: 'Todo' }, { k: 'receta', l: 'Recetas' }, { k: 'entrenamiento', l: 'Entrenamientos' }, { k: 'tip', l: 'Tips' }];
 const KIND_LABEL: Record<Content['kind'], string> = { receta: 'Receta', entrenamiento: 'Entrenamiento', tip: 'Tip' };
+const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const label = (c: Content) => (c.kind === 'receta' && c.meal ? c.meal.charAt(0).toUpperCase() + c.meal.slice(1) : KIND_LABEL[c.kind]);
+// 1 = lunes … 7 = domingo, a partir de una fecha YYYY-MM-DD
+const dow = (ymd: string) => ((new Date(`${ymd}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date());
 function env() {
@@ -164,8 +168,11 @@ function Home({ st, setSt, reload, env: e, bip, onInstall }: { st: State; setSt:
   const done = new Set(st.done);
   const total = st.checklist.length;
   const n = st.checklist.filter((i) => done.has(i.id)).length;
-  const items = st.content.filter((c) => kind === 'all' || c.kind === kind);
-  const kinds = KINDS.filter((k) => k.k === 'all' || st.content.some((c) => c.kind === k.k));
+  const todayDow = dow(st.day);
+  const [selDay, setSelDay] = useState(todayDow);
+  const ofDay = st.content.filter((c) => !c.day || c.day === selDay);
+  const items = ofDay.filter((c) => kind === 'all' || c.kind === kind);
+  const kinds = KINDS.filter((k) => k.k === 'all' || ofDay.some((c) => c.kind === k.k));
   const name = first(st.name);
   const dateLabel = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Madrid' });
 
@@ -242,7 +249,10 @@ function Home({ st, setSt, reload, env: e, bip, onInstall }: { st: State; setSt:
 
       {st.content.length > 0 && (
         <section className="gf-ideas">
-          <h2>Ideas para tu día</h2>
+          <h2>{selDay === todayDow ? 'Tu plan de hoy' : `Plan del ${DAYS[selDay - 1].toLowerCase()}`}</h2>
+          <div className="gf-days" role="tablist" aria-label="Día de la semana">
+            {DAYS.map((d, i) => <button key={d} role="tab" aria-selected={selDay === i + 1} aria-label={d} className={`${selDay === i + 1 ? 'on' : ''}${todayDow === i + 1 ? ' today' : ''}`} onClick={() => { setSelDay(i + 1); setKind('all'); }}>{d === 'Miércoles' ? 'X' : d.slice(0, 1)}</button>)}
+          </div>
           <div className="gf-chips" role="tablist">
             {kinds.map((k) => <button key={k.k} role="tab" aria-selected={kind === k.k} className={kind === k.k ? 'on' : ''} onClick={() => setKind(k.k)}>{k.l}</button>)}
           </div>
@@ -250,7 +260,7 @@ function Home({ st, setSt, reload, env: e, bip, onInstall }: { st: State; setSt:
             {items.map((c) => (
               <button key={c.id} className={`gf-slide k-${c.kind}`} onClick={() => setOpen(c)}>
                 {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="gf-slide-ph" aria-hidden="true">{c.kind === 'receta' ? '🥗' : c.kind === 'entrenamiento' ? '🧘‍♀️' : '🌿'}</span>}
-                <span className="gf-slide-body"><em>{KIND_LABEL[c.kind]}</em><strong>{c.title}</strong>{c.summary && <small>{c.summary}</small>}</span>
+                <span className="gf-slide-body"><em>{label(c)}</em><strong>{c.title}</strong>{c.summary && <small>{c.summary}</small>}</span>
               </button>
             ))}
           </div>
@@ -301,7 +311,7 @@ function Sheet({ c, onClose }: { c: Content; onClose: () => void }) {
         <span className="gf-handle" />
         <button className="gf-x" onClick={onClose} aria-label="Cerrar">×</button>
         {c.image_url && <img src={c.image_url} alt="" />}
-        <em>{KIND_LABEL[c.kind]}</em>
+        <em>{label(c)}{c.day ? ` · ${DAYS[c.day - 1]}` : ''}</em>
         <h2>{c.title}</h2>
         {c.summary && <p className="gf-muted">{c.summary}</p>}
         <div className="gf-body">{(c.body || '').split(/\n{2,}/).map((p, i) => <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}<br /></span>)}</p>)}</div>
