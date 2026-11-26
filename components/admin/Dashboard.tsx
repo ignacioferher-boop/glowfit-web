@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { Badge, Empty, Icon, Skeleton, ago, eur, type Order } from './ui';
+import NotifyCard from './NotifyCard';
 
 const DAY = 86400000;
 const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
@@ -46,6 +47,7 @@ export default function Dashboard({ orders, openOrder, goOrders }: { orders: Ord
           {([7, 30, 90] as const).map((r) => <button key={r} className={range === r ? 'active' : ''} onClick={() => setRange(r)}>{r} días</button>)}
         </div>
       </div>
+      <NotifyCard compact />
 
       <div className="ad-kpis">
         <Kpi icon="euro" label="Ventas hoy" value={eur(stats.todayTotal)} sub={`${stats.todayCount} ${stats.todayCount === 1 ? 'pedido' : 'pedidos'}`} i={0} />

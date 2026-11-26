@@ -1,12 +1,9 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
-// Guía PDF "Tu momento, cada día": regalo con cada pedido hecho hasta GIFT_UNTIL (semana de Black Friday).
+// Guía PDF "Tu momento, cada día": regalo con cada pedido hecho hasta GUIDE_GIFT_UNTIL (semana de Black Friday).
 // Para alargar o acortar la promoción, cambia esta fecha (hora de Madrid). Los enlaces ya enviados siguen funcionando.
-export const GUIDE = {
-  giftUntil: process.env.GUIDE_GIFT_UNTIL || '2026-12-01T23:59:59+01:00',
-  title: 'Tu momento, cada día',
-};
-export const guideGiftActive = (d = new Date()) => d.getTime() <= new Date(GUIDE.giftUntil).getTime();
+// La fecha está en lib/guide-gift.ts.
+export { guideGiftActive } from './guide-gift';
 
 const key = () => process.env.ORDER_SECRET || '';
 export const guideToken = (orderNumber: number | string) => createHmac('sha256', key()).update(`guide:${orderNumber}`).digest('base64url').slice(0, 24);

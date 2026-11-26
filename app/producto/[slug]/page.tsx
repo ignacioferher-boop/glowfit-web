@@ -1,4 +1,5 @@
 import BlackFridayPromo from '@/components/BlackFridayPromo';
+import GiftGuide from '@/components/GiftGuide';
 import { notFound, redirect } from 'next/navigation';
 import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
@@ -98,6 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {!isPack && product.short_description && <div className="rich product-short" dangerouslySetInnerHTML={{ __html: cleanHtml(product.short_description) }} />}
 
           <AddToCart product={product} withQty />
+          <GiftGuide variant="compact" />
           <BlackFridayPromo exclude={product.slug} />
           <TrustBar variant="list" />
 

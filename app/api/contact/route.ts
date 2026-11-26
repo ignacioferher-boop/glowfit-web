@@ -3,6 +3,7 @@ import { supabasePublic } from '@/lib/data';
 import { contactEmail, sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
+import { notifyAdmins } from '@/lib/push';
 export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   if (b.website) return NextResponse.json({ ok: true }); // trampa anti-spam
@@ -15,5 +16,6 @@ export async function POST(req: Request) {
   if (error) { console.error('contact', error.message); return NextResponse.json({ error: 'No hemos podido enviar tu mensaje. Inténtalo de nuevo.' }, { status: 500 }); }
   // Aviso por email al buzón de contacto (si Resend está configurado)
   await sendEmail(LEGAL.email, contactEmail(row), row.email).catch((e) => console.error('contact mail', e));
+  await notifyAdmins({ title: `✉️ Mensaje de ${row.name.split(' ')[0]}`, body: row.message.slice(0, 140), tag: 'contact' });
   return NextResponse.json({ ok: true });
 }
