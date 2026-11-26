@@ -29,7 +29,7 @@ export const DEFAULT_HOME: HomeContent = {
     {
       id: 'hero', type: 'hero', logo: media('2026/05/LOGO-GLOWFIT.png'), eyebrow: 'BIENESTAR . BELLEZA . HÁBITOS',
       title: 'TU BIENESTAR\nTU GLOW', subtitle: 'Fórmulas que te acompañan por dentro y se reflejan por fuera.',
-      button_text: 'DESCUBRE TU GLOW >', button_link: '/productos/', image: media('2026/11/3-edited-scaled.png'), background: media('2026/05/FONDO-COLOR-scaled.png'),
+      button_text: 'DESCUBRE TU GLOW >', button_link: '/productos/', image: '/img/2026/11/3-edited-scaled.webp', background: media('2026/05/FONDO-COLOR-scaled.png'),
     },
     {
       id: 'favoritos', type: 'products', eyebrow: 'SUPLEMENTOS', title: 'NUESTROS FAVORITOS',
@@ -40,7 +40,7 @@ export const DEFAULT_HOME: HomeContent = {
       body: 'Glowfit nació de nosotros.\nDe nuestra forma de cuidarnos, de entrenar, de viajar y de disfrutar la vida.\nDe buscar sentirnos bien por dentro para reflejarlo por fuera.\n\nAsí nació Glowfit: una marca creada para acompañarte a sentirte bien, cuidarte y brillar desde dentro.',
     },
     {
-      id: 'suplementos', type: 'text_image', title: 'SUPLEMENTOS CREADOS PARA TU BIENESTAR', reverse: true, image: media('2026/06/FOTOS-CUADRADA-2.png'),
+      id: 'suplementos', type: 'text_image', title: 'SUPLEMENTOS CREADOS PARA TU BIENESTAR', reverse: true, image: '/img/2026/06/FOTOS-CUADRADA-2.webp',
       body: 'Nuestra línea de suplementos combina ingredientes cuidadosamente seleccionados y fórmulas desarrolladas para acompañarte en tu día a día.\n\nDesde fórmulas pensadas para complementar tus objetivos de control de peso y bienestar, hasta complementos destinados al cuidado digestivo, la belleza y el equilibrio del organismo.\n\nCada producto Glowfit nace con un mismo propósito: ayudarte a cuidar de ti, sentirte bien y mantener un estilo de vida saludable.',
     },
   ],

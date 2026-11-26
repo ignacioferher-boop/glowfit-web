@@ -6,7 +6,7 @@ const POSTS = [
   { slug: 'fitness', cat: 'FITNESS', title: 'Nuestra rutina para sentirnos bien por dentro y por fuera', img: '2026/10/FOTO-FITNESS-1-scaled.jpeg' },
   { slug: 'nutricion', cat: 'NUTRICIÓN', title: 'Cómo organizar una alimentación equilibrada', img: '2026/10/FOTO-NUTRITION-1-scaled.jpeg' },
   { slug: 'beauty-self-care', cat: 'BEAUTY & SELF CARE', title: 'El autocuidado empieza por dedicarte tiempo', img: '2026/10/FOTO-BEAUTY-SELF-CARE-1-scaled.jpeg' },
-  { slug: 'the-glowfit-edit', cat: 'THE GLOWFIT EDIT', title: 'Nuestra rutina para sentirnos bien por dentro y por fuera', img: '2026/10/FOTO-THE-GLOWFIT-EDIT-scaled.jpeg' },
+  { slug: 'the-glowfit-edit', cat: 'THE GLOWFIT EDIT', title: 'El proceso detrás de nuestros productos', img: '2026/10/FOTO-THE-GLOWFIT-EDIT-scaled.jpeg' },
 ];
 export default function Blog() {
   return (

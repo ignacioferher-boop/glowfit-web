@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: { default: 'Glowfit · Bienestar, belleza y hábitos', template: '%s · Glowfit' },
   description: 'Suplementos Glowfit: fórmulas que te acompañan por dentro y se reflejan por fuera.',
   icons: { icon: media('2026/06/cropped-512X512px-ISOLOGO-GLOWFIT-VERDE-DO.png') },
-  openGraph: { siteName: 'Glowfit', locale: 'es_ES', type: 'website', images: [media('2026/11/3-edited-scaled.png')] },
+  openGraph: { siteName: 'Glowfit', locale: 'es_ES', type: 'website', images: [{ url: '/img/og-glowfit.jpg', width: 1200, height: 630, alt: 'Glowfit' }] },
   alternates: { canonical: './' },
   ...(process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION } } : {}),
 };

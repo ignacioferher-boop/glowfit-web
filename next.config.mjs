@@ -30,6 +30,7 @@ const nextConfig = {
       { source: '/productos-3', destination: '/productos/', permanent: true },
       { source: '/tienda', destination: '/productos/', permanent: true },
       { source: '/finalizar-compra', destination: '/carrito/', permanent: true },
+      { source: '/cambios-y-devoluciones', destination: '/reembolso_devoluciones/', permanent: true },
     ];
   },
 };

@@ -7,7 +7,7 @@ export const revalidate = 300;
 const EXCLUDED = new Set(['carrito', 'tienda', 'finalizar-compra', 'productos-3', 'blog', 'sobre-nosotros']);
 const BLOG = new Set(['lifestyle', 'wellness', 'fitness', 'nutricion', 'beauty-self-care', 'the-glowfit-edit']);
 
-const decode = (s: string) => s.replace(/&amp;/g, '&').replace(/&#8217;/g, '’').replace(/&#8211;/g, '–').replace(/&nbsp;/g, ' ');
+const decode = (s: string) => s.replace(/&amp;|&#0?38;/g, '&').replace(/&#8217;/g, '’').replace(/&#8211;/g, '–').replace(/&nbsp;/g, ' ');
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
