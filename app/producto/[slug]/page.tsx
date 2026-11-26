@@ -37,7 +37,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound();
   }
   const relatedPool = all.filter((p) => p.slug !== 'prueba-1-euro');
-  const related = [...all.filter((p) => p.slug !== slug && p.category === product.category), ...all.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
+  const related = [...relatedPool.filter((p) => p.slug !== slug && p.category === product.category), ...relatedPool.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
   const save = product.compareAtCents ? product.compareAtCents - product.price_cents : 0;
   const isPack = product.includes.length > 0;
   const reviews = await getReviews(slug);
