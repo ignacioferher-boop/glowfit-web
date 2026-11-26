@@ -5,6 +5,7 @@ import { CurrencySelect } from './currency';
 import { media } from '@/lib/config';
 
 const NAV = [
+  { href: '/', label: 'INICIO' },
   { href: '/productos/', label: 'PRODUCTOS' },
   { href: '/blog/', label: 'BLOG' },
   { href: '/sobre-nosotros/', label: 'CONTACTO' },

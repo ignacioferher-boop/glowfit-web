@@ -27,6 +27,3 @@ export const media = (path: string) => `${MEDIA_BASE}/${path}`;
 export const formatEUR = (cents: number) =>
   new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 
-// Producto TEMPORAL para la compra real de prueba de 1 €: si el carrito solo lleva este producto, no se cobra envío.
-export const TEST_PRODUCT_SLUG = 'prueba-1-euro';
-export const onlyTestProduct = (slugs: string[]) => slugs.length > 0 && slugs.every((s) => s === TEST_PRODUCT_SLUG);

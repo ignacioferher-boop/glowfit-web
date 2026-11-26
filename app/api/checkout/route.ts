@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getProducts, supabasePublic } from '@/lib/data';
 import { LEGAL } from '@/lib/legal';
-import { SHIPPING, onlyTestProduct } from '@/lib/config';
+import { SHIPPING } from '@/lib/config';
 import { checkStock } from '@/lib/stock';
 import { getInventorySettings } from '@/lib/settings';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   if (missing.length) return NextResponse.json({ error: 'Uno de los productos de tu carrito ya no está disponible. Quítalo del carrito para continuar.', unavailable: missing.map((m) => m.slug) }, { status: 409 });
 
   const subtotal = lines.reduce((n, l) => n + l.p.price_cents * l.qty, 0);
-  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents) || onlyTestProduct(lines.map((l) => l.p.slug));
+  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents);
   const site = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
   // Reserva los botes durante el pago para que nadie más se los lleve.
