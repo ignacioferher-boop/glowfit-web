@@ -38,7 +38,8 @@ export async function recordPaidSession(stripe: Stripe, sessionId: string, order
       return { ok: false as const, error: 'db' };
     }
     const row = Array.isArray(data) ? data[0] : data;
-    if (order.status === 'paid') revalidatePath('/', 'layout'); // refresca el stock visible en la tienda
+    // Refresca el stock visible en la tienda. Desde la página de éxito (render) Next no lo permite: se ignora y se refresca solo en 5 min.
+    if (order.status === 'paid') { try { revalidatePath('/', 'layout'); } catch { /* llamado durante el render */ } }
     // Emails de confirmación (solo una vez y solo si el pago está hecho)
     // "Reclama" el envío de forma atómica: si el webhook y la página de éxito llegan a la vez, solo uno manda los correos
     const claimed = row && !row.email_sent && order.status === 'paid' && order.email
