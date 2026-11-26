@@ -5,5 +5,5 @@ export const isDigital = (slug: string) => DIGITAL_SLUGS.has(slug);
 export const allDigital = (slugs: string[]) => slugs.length > 0 && slugs.every(isDigital);
 
 // Productos sin gastos de envío (producto de prueba de 1 €). Quitar el slug de aquí cuando se borre el producto.
-export const FREE_SHIPPING_SLUGS = new Set(['prueba-1-euro']);
+export const FREE_SHIPPING_SLUGS = new Set<string>([]);
 export const isFreeShipping = (slug: string) => FREE_SHIPPING_SLUGS.has(slug);
