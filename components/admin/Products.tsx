@@ -31,7 +31,7 @@ function StockTag({ p, items, comps }: { p: Product; items: Product[]; comps: Co
   return <small className={`ad-stock ${tone}`}>{n === 0 ? 'Agotado' : isPack ? `${n} packs disponibles` : `${n} ${n === 1 ? 'bote' : 'botes'}`}</small>;
 }
 
-const EMPTY: Product = { slug: '', name: '', category: 'Vitaminas', tagline: '', short_description: '', description: '', price_cents: 0, images: [], active: true, sort: 99 };
+const EMPTY: Product = { slug: '', name: '', category: 'Complementos', tagline: '', short_description: '', description: '', price_cents: 0, images: [], active: true, sort: 99 };
 
 export default function Products() {
   const toast = useToast();
@@ -221,7 +221,7 @@ function ProductEditor({ initial, all, comps, onDone }: { initial: Product; all:
           <section className="ad-card">
             <h3>Precio y estado</h3>
             <label className="ad-field"><span>Precio con IVA</span><span className="ad-input-suffix"><input inputMode="decimal" value={price} onChange={(e) => { setPrice(e.target.value); setErrors((x) => ({ ...x, price: '' })); }} aria-invalid={!!errors.price} placeholder="29,90" /><b>€</b></span>{errors.price && <em className="ad-err">{errors.price}</em>}</label>
-            <label className="ad-field"><span>Categoría</span><input value={p.category ?? ''} onChange={(e) => set('category', e.target.value)} list="ad-cats" /><datalist id="ad-cats"><option value="Vitaminas" /><option value="PACKS" /></datalist></label>
+            <label className="ad-field"><span>Categoría</span><input value={p.category ?? ''} onChange={(e) => set('category', e.target.value)} list="ad-cats" /><datalist id="ad-cats"><option value="Complementos" /><option value="PACKS" /></datalist></label>
             <label className="ad-field"><span>Posición en la tienda</span><input type="number" min={0} value={p.sort} onChange={(e) => set('sort', Number(e.target.value))} /></label>
             <label className="ad-switch-row big"><Switch on={p.active} onChange={(v) => set('active', v)} label="Visible en la tienda" /><span>{p.active ? 'Visible en la tienda' : 'Oculto en la tienda'}</span></label>
           </section>

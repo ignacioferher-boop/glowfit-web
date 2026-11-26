@@ -1,12 +1,11 @@
 import { media } from '@/lib/config';
 export const metadata = { title: 'Glowfit Journal' };
+// Beauty & Self Care y The Glowfit Edit están ocultos hasta que la clienta mande sus textos (eran copia de Lifestyle y Wellness).
 const POSTS = [
   { slug: 'lifestyle', cat: 'LIFESTYLE', title: 'El autocuidado empieza por dedicarte tiempo', img: '2026/10/FOTO-LIFESTYLE-BLOG-scaled.jpeg' },
   { slug: 'wellness', cat: 'WELLNESS', title: 'El proceso detrás de nuestros productos', img: '2026/10/FOTO-WELLNESS-scaled.jpeg' },
   { slug: 'fitness', cat: 'FITNESS', title: 'Nuestra rutina para sentirnos bien por dentro y por fuera', img: '2026/10/FOTO-FITNESS-1-scaled.jpeg' },
   { slug: 'nutricion', cat: 'NUTRICIÓN', title: 'Cómo organizar una alimentación equilibrada', img: '2026/10/FOTO-NUTRITION-1-scaled.jpeg' },
-  { slug: 'beauty-self-care', cat: 'BEAUTY & SELF CARE', title: 'El autocuidado empieza por dedicarte tiempo', img: '2026/10/FOTO-BEAUTY-SELF-CARE-1-scaled.jpeg' },
-  { slug: 'the-glowfit-edit', cat: 'THE GLOWFIT EDIT', title: 'El proceso detrás de nuestros productos', img: '2026/10/FOTO-THE-GLOWFIT-EDIT-scaled.jpeg' },
 ];
 export default function Blog() {
   return (

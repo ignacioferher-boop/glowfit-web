@@ -148,7 +148,7 @@ h1, h2, h3 { font-family: var(--heading); font-weight: 400; line-height: 1.15; m
 /* Blog */
 .blog-intro .lead { font-family: var(--heading); font-size: 1.4rem; }
 .blog-grid-wrap { background-size: cover; padding: 48px 16px 64px; }
-.blog-grid { list-style: none; margin: 0 auto; padding: 0; max-width: var(--wrap); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.blog-grid { list-style: none; margin: 0 auto; padding: 0; max-width: var(--wrap); display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .blog-grid a { display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; }
 .blog-grid img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: var(--radius); margin-bottom: 14px; transition: transform .3s; }
 .blog-grid a:hover img { transform: translateY(-4px); }

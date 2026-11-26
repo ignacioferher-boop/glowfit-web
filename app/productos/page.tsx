@@ -5,7 +5,7 @@ import ProductCard from '@/components/ProductCard';
 import TrustBar from '@/components/TrustBar';
 import BlackFridayPromo from '@/components/BlackFridayPromo';
 export const revalidate = 300;
-export const metadata = { title: 'Productos', description: 'Suplementos Glowfit: vitaminas y packs para tu rutina de bienestar. Envío a toda España.' };
+export const metadata = { title: 'Productos', description: 'Suplementos Glowfit: complementos y packs para tu rutina de bienestar. Envío a toda España.' };
 
 export default async function Productos({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
   const { cat } = await searchParams;

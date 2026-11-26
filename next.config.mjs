@@ -31,6 +31,9 @@ const nextConfig = {
       { source: '/tienda', destination: '/productos/', permanent: true },
       { source: '/finalizar-compra', destination: '/carrito/', permanent: true },
       { source: '/cambios-y-devoluciones', destination: '/reembolso_devoluciones/', permanent: true },
+      // Artículos del blog ocultos hasta tener texto propio (temporal)
+      { source: '/beauty-self-care', destination: '/blog/', permanent: false },
+      { source: '/the-glowfit-edit', destination: '/blog/', permanent: false },
     ];
   },
 };

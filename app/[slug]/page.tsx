@@ -22,12 +22,17 @@ export default async function WpPage({ params }: { params: Promise<{ slug: strin
   if (!page) notFound();
   // Quita restos de formularios de WordPress que no funcionan fuera de WP
   const html = cleanHtml(page.content.replace(/<form[\s\S]*?<\/form>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, ''));
-  const empty = html.replace(/<[^>]+>/g, '').trim().length === 0;
+  // En el blog, todo el texto venía en negrita desde WordPress: dejamos en negrita solo los subtítulos (frases cortas sin punto final).
+  const body = BLOG.has(slug) ? html.replace(/(<p[^>]*>)\s*<strong>([\s\S]*?)<\/strong>\s*(<\/p>)/g, (m, a, t, b) => {
+    const plain = t.replace(/<[^>]+>/g, '').trim();
+    return plain.length <= 70 && !/[.:!?…]$/.test(plain) ? m : `${a}${t}${b}`;
+  }) : html;
+  const empty = body.replace(/<[^>]+>/g, '').trim().length === 0;
   return (
     <article className={`page-section wp-page ${BLOG.has(slug) ? 'blog-post' : 'legal'}`}>
       {!BLOG.has(slug) && <h1 className="section-title">{decode(page.title).toUpperCase()}</h1>}
       {empty ? <p className="center">Estamos preparando este contenido. Si tienes cualquier duda, <a href="/sobre-nosotros/">escríbenos</a>.</p>
-        : <div className="wp-content" dangerouslySetInnerHTML={{ __html: html }} />}
+        : <div className="wp-content" dangerouslySetInnerHTML={{ __html: body }} />}
     </article>
   );
 }
