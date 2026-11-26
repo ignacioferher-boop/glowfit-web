@@ -1,5 +1,6 @@
 import BlackFridayPromo from '@/components/BlackFridayPromo';
-import GiftGuide from '@/components/GiftGuide';
+import GiftGuide, { BfRibbon } from '@/components/GiftGuide';
+import { guideGiftActive } from '@/lib/guide-gift';
 import { notFound, redirect } from 'next/navigation';
 import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
@@ -71,8 +72,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {product.catLabel && <><span aria-hidden="true">/</span><a href={`/productos/?cat=${encodeURIComponent(product.category!)}`}>{product.catLabel}</a></>}
       </nav>
       <div className="product-layout">
-        <div className="product-media"><Gallery images={product.images} name={product.name} /></div>
+        <div className="product-media"><Gallery images={product.images} name={product.name} overlay={guideGiftActive() && product.available !== 0 ? <BfRibbon big pack={product.slug === 'pack-black-friday'} /> : null} /></div>
         <div className="product-info">
+          {guideGiftActive() && <p className="kiona bf-eyebrow-dark">BLACK FRIDAY · REGALO INCLUIDO</p>}
           {product.catLabel && <p className="kiona card-cat">{product.catLabel.toUpperCase()}</p>}
           <h1>{product.name}</h1>
           {product.tagline && <p className="product-tagline">{product.tagline}</p>}
@@ -81,7 +83,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <Price className="price big" cents={product.price_cents} />
             {product.compareAtCents && <s><Price cents={product.compareAtCents} /></s>}
             {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
-            {product.slug === 'pack-black-friday' && <span className="card-badge bf static">BLACK FRIDAY</span>}
+            {(product.slug === 'pack-black-friday' || guideGiftActive()) && <span className="card-badge bf static">{product.slug === 'pack-black-friday' ? 'BLACK FRIDAY' : 'BLACK FRIDAY · 🎁 GUÍA DE REGALO'}</span>}
           </div>
           <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
 
