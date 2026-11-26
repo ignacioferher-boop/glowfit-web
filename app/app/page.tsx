@@ -27,8 +27,7 @@ export default function GlowApp() {
   const [auth, setAuth] = useState<boolean | null>(null);
   const [e, setE] = useState(env());
   const [bip, setBip] = useState<BIP | null>(null);
-  const [skipInstall, setSkipInstall] = useState(false);
-  const installedRef = useRef(false);
+    const installedRef = useRef(false);
 
   const load = useCallback(async () => {
     const en = env();
@@ -41,7 +40,6 @@ export default function GlowApp() {
 
   useEffect(() => {
     setE(env());
-    try { setSkipInstall(sessionStorage.getItem('gf-skip-install') === '1'); } catch {}
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => {});
     const onBip = (ev: Event) => { ev.preventDefault(); setBip(ev as BIP); };
     const onInstalled = () => { installedRef.current = true; setBip(null); load(); };
@@ -53,11 +51,9 @@ export default function GlowApp() {
     return () => { window.removeEventListener('beforeinstallprompt', onBip); window.removeEventListener('appinstalled', onInstalled); document.removeEventListener('visibilitychange', onVis); };
   }, [load]);
 
-  const skip = () => { setSkipInstall(true); try { sessionStorage.setItem('gf-skip-install', '1'); } catch {} };
-
   if (auth === null) return <div className="gf-app"><div className="gf-center"><span className="gf-spin" aria-label="Cargando" /></div></div>;
-  // iPhone en el navegador: primero que la instale (el acceso guardado en Safari no pasa a la app instalada)
-  if (e.ios && !e.standalone && !skipInstall) return <div className="gf-app"><IosInstall safari={e.safari} onSkip={skip} /></div>;
+  // iPhone: solo se puede usar instalada en la pantalla de inicio (obligatorio, decisión de Glowfit)
+  if (e.ios && !e.standalone) return <div className="gf-app"><IosInstall safari={e.safari} /></div>;
   if (!auth || !st) return <div className="gf-app"><Activate onDone={load} /></div>;
   return <div className="gf-app"><Home st={st} setSt={setSt} reload={load} env={e} bip={bip} onInstall={async () => { if (!bip) return; await bip.prompt(); const c = await bip.userChoice; if (c.outcome === 'accepted') { installedRef.current = true; setBip(null); load(); } }} /></div>;
 }
@@ -71,32 +67,62 @@ function PlusSq() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8v8M8 12h8" /></svg>;
 }
 
-function IosInstall({ safari, onSkip }: { safari: boolean; onSkip: () => void }) {
+function IosInstall({ safari }: { safari: boolean }) {
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [step, setStep] = useState(0);
   useEffect(() => { const c = new URLSearchParams(location.search).get('c'); if (c) setCode(c.toUpperCase()); }, []);
+  // Demostración animada: va pasando por los 3 pasos
+  useEffect(() => { const t = setInterval(() => setStep((s) => (s + 1) % 3), 2600); return () => clearInterval(t); }, []);
   const copy = async () => { try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {} };
   return (
     <div className="gf-screen gf-install">
       <Logo />
-      <img className="gf-install-icon" src="/img/app-icon-180.png" alt="" width={84} height={84} />
       <h1>Instala tu app Glowfit</h1>
-      <p className="gf-muted">Para entrar, primero añádela a tu pantalla de inicio. Así la tendrás siempre a mano, como cualquier otra app.</p>
-      {!safari && <p className="gf-alert">Abre esta página en <strong>Safari</strong> para poder instalarla: copia la dirección <strong>glowfit.group/app</strong> y pégala en Safari.</p>}
+      <p className="gf-muted">La app de Glowfit solo funciona instalada en tu pantalla de inicio. Es gratis y tardas 20 segundos.</p>
+      {!safari && <p className="gf-alert">Primero ábrela en <strong>Safari</strong>: copia la dirección <strong>glowfit.group/app</strong> y pégala en Safari. Desde otras apps (Instagram, Gmail…) no se puede instalar.</p>}
+      <Demo step={step} />
       <ol className="gf-steps">
-        <li><span>1</span><div>Pulsa el botón <strong>Compartir</strong> <i className="gf-ic"><ShareIcon /></i> abajo en la barra de Safari.</div></li>
-        <li><span>2</span><div>Baja y elige <strong>«Añadir a pantalla de inicio»</strong> <i className="gf-ic"><PlusSq /></i></div></li>
-        <li><span>3</span><div>Pulsa <strong>«Añadir»</strong> y abre la app desde el icono de Glowfit.</div></li>
+        <li className={step === 0 ? 'on' : ''}><span>1</span><div>Pulsa el botón <strong>Compartir</strong> <i className="gf-ic"><ShareIcon /></i> de Safari. <small>Si no lo ves, toca primero los tres puntos <strong>···</strong> de la barra de abajo.</small></div></li>
+        <li className={step === 1 ? 'on' : ''}><span>2</span><div>Desliza hacia abajo y toca <strong>«Añadir a pantalla de inicio»</strong> <i className="gf-ic"><PlusSq /></i> <small>Si no aparece, toca «Ver más» o «Editar acciones».</small></div></li>
+        <li className={step === 2 ? 'on' : ''}><span>3</span><div>Pulsa <strong>«Añadir»</strong> y abre la app desde el nuevo icono de Glowfit en tu pantalla.</div></li>
       </ol>
       {code && (
         <div className="gf-codebox">
-          <small>Tu código para entrar en la app</small>
+          <small>Tu código: lo necesitarás al abrir la app</small>
           <strong>{code}</strong>
           <button className="gf-btn ghost sm" onClick={copy}>{copied ? 'Copiado ✓' : 'Copiar código'}</button>
         </div>
       )}
-      <div className="gf-arrow" aria-hidden="true">↓</div>
-      <button className="gf-link" onClick={onSkip}>Seguir en el navegador por ahora</button>
+      <p className="gf-muted sm">¿Ya la tienes instalada? Ciérrala aquí y ábrela desde el icono de Glowfit.<br />¿Problemas? <a href="https://wa.me/34722406293" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te ayudamos.</p>
+    </div>
+  );
+}
+
+// Mini animación de un iPhone mostrando dónde pulsar en cada paso
+function Demo({ step }: { step: number }) {
+  return (
+    <div className="gf-demo" aria-hidden="true">
+      <div className="gf-phone">
+        <div className={`gf-scene s0${step === 0 ? ' on' : ''}`}>
+          <div className="gf-page"><i /><i /><i className="short" /></div>
+          <div className="gf-bar"><span>‹</span><span>›</span><span className="gf-tap"><ShareIcon /></span><span>▢</span><span>···</span></div>
+        </div>
+        <div className={`gf-scene s1${step === 1 ? ' on' : ''}`}>
+          <div className="gf-sheetmock">
+            <div className="row">Copiar</div>
+            <div className="row">Añadir a favoritos</div>
+            <div className="row gf-tap">Añadir a pantalla de inicio <PlusSq /></div>
+            <div className="row">Buscar en la página</div>
+          </div>
+        </div>
+        <div className={`gf-scene s2${step === 2 ? ' on' : ''}`}>
+          <div className="gf-addmock">
+            <div className="top"><span>Cancelar</span><b className="gf-tap">Añadir</b></div>
+            <div className="mid"><img src="/img/app-icon-180.png" alt="" /><span>Glowfit</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

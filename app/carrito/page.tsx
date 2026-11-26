@@ -5,6 +5,7 @@ import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING } from '@/lib/config';
 import { useCurrency, CurrencyNote } from '@/components/currency';
 import GiftGuide from '@/components/GiftGuide';
+import { allDigital } from '@/lib/digital';
 
 export default function Carrito() {
   const { items, setQty, remove, subtotal, notice, sync } = useCart();
@@ -30,7 +31,8 @@ export default function Carrito() {
     'aria-invalid': touched[k] && !!errors[k],
   });
   const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents);
-  const shipping = items.length === 0 ? 0 : free ? 0 : SHIPPING.standardCents;
+  const digitalOnly = allDigital(items.map((i) => i.slug));
+  const shipping = items.length === 0 || digitalOnly ? 0 : free ? 0 : SHIPPING.standardCents;
 
   async function checkout() {
     setLoading(true); setError('');
@@ -78,7 +80,7 @@ export default function Carrito() {
       </ol>
       <div className="cart-layout">
       <div className="cart-main">
-      {SHIPPING.freeFromCents > 0 && (
+      {SHIPPING.freeFromCents > 0 && !digitalOnly && (
         <div className="ship-progress">
           <p>{free ? <><strong>¡Tienes envío gratis!</strong></> : <>Te faltan <strong>{money(SHIPPING.freeFromCents - subtotal)}</strong> para el envío gratis</>}</p>
           <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round((subtotal / SHIPPING.freeFromCents) * 100))} aria-label="Progreso hacia el envío gratis"><span style={{ width: `${Math.min(100, (subtotal / SHIPPING.freeFromCents) * 100)}%` }} /></div>
@@ -105,7 +107,7 @@ export default function Carrito() {
       <div className="cart-summary">
         <h2 className="kiona summary-title">RESUMEN</h2>
         <p><span>Subtotal</span><span>{money(subtotal)}</span></p>
-        <p><span>Envío (España)</span><span>{shipping === 0 ? 'Gratis' : money(shipping)}</span></p>
+        <p><span>{digitalOnly ? 'Entrega' : 'Envío (España)'}</span><span>{digitalOnly ? 'Digital, al momento' : shipping === 0 ? 'Gratis' : money(shipping)}</span></p>
         <p className="total"><span>Total</span><span>{money(subtotal + shipping)}</span></p>
         <CurrencyNote eurCents={subtotal + shipping} />
         <p className="tax-note">IVA incluido. Entrega en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables.</p>

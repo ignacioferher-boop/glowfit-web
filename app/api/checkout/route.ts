@@ -7,6 +7,7 @@ import { checkStock } from '@/lib/stock';
 import { getInventorySettings } from '@/lib/settings';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
 import { normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
+import { allDigital, isDigital } from '@/lib/digital';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -57,6 +58,9 @@ export async function POST(req: Request) {
   const subtotal = lines.reduce((n, l) => n + l.p.price_cents * l.qty, 0);
   const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents);
   const site = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+  // Solo productos digitales (la guía): sin envío ni dirección
+  const digitalOnly = allDigital(lines.map((l) => l.p.slug));
+  const hasDigital = lines.some((l) => isDigital(l.p.slug));
 
   // Reserva los botes durante el pago para que nadie más se los lleve.
   // Si el cliente no paga a tiempo, la reserva caduca sola y el stock vuelve a estar disponible.
@@ -94,7 +98,9 @@ export async function POST(req: Request) {
         product_data: { name: p.name, images: p.images.slice(0, 1), metadata: { slug: p.slug } },
       },
     })),
-    shipping_address_collection: { allowed_countries: ['ES'] },
+    ...(digitalOnly ? {} : { shipping_address_collection: { allowed_countries: ['ES'] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] } }),
+    // Contenido digital: aviso legal de entrega inmediata (art. 103 m LGDCU)
+    ...(hasDigital ? { custom_text: { submit: { message: 'La guía en PDF se entrega al momento por email. Al pagar aceptas su entrega inmediata y que, por ser contenido digital, no se puede devolver una vez enviada.' } } } : {}),
     // Opción "Comprar como empresa": Stripe pide y valida el NIF/CIF para la factura
     tax_id_collection: { enabled: true },
     customer_creation: 'always',
@@ -106,7 +112,8 @@ export async function POST(req: Request) {
     after_expiration: { recovery: { enabled: true, allow_promotion_codes: true } },
     billing_address_collection: 'auto',
     customer_email: email,
-    shipping_options: [{
+    ...(digitalOnly ? {} : {
+      shipping_options: [{
       shipping_rate_data: {
         type: 'fixed_amount',
         display_name: free ? 'Envío gratis' : 'Envío estándar',
@@ -114,6 +121,7 @@ export async function POST(req: Request) {
         delivery_estimate: { minimum: { unit: 'business_day', value: SHIPPING.minDays }, maximum: { unit: 'business_day', value: SHIPPING.maxDays } },
       },
     }],
+    }),
     metadata: { reservation: reservation ?? '', items: JSON.stringify(lines.map(({ p, qty }) => ({ slug: p.slug, qty }))), name, phone, accepts_marketing: String(c.accepts_marketing !== false), terms_version: LEGAL.termsVersion },
     success_url: `${site}/checkout/exito/?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${site}/carrito/`,

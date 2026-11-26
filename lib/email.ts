@@ -8,6 +8,8 @@ export type OrderMail = {
   address?: Record<string, string | null> | null; items: Item[]; shipping_cents: number; total_cents: number;
   invoice_url?: string | null;
   guide_url?: string | null;
+  guide_bought?: boolean;
+  digital_only?: boolean;
 };
 
 const eur = (c: number | null | undefined) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((c ?? 0) / 100);
@@ -95,23 +97,23 @@ export function customerEmail(o: OrderMail) {
   return {
     subject: `¡Pedido #${o.order_number} confirmado! · Glowfit`,
     html: layout({
-      preheader: `Hemos recibido tu pedido #${o.order_number} por ${eur(o.total_cents)}. Ya lo estamos preparando.`,
+      preheader: o.digital_only ? `Tu guía ya está lista para descargar. Pedido #${o.order_number}.` : `Hemos recibido tu pedido #${o.order_number} por ${eur(o.total_cents)}. Ya lo estamos preparando.`,
       eyebrow: `Pedido #${o.order_number}`,
       title: `¡Gracias, ${first}!`,
-      intro: 'Hemos recibido tu pedido y ya lo estamos preparando con mimo. Te avisaremos en cuanto salga hacia tu casa.',
-      body: `${steps(0)}
+      intro: o.digital_only ? 'Gracias por tu compra. Aquí tienes tu guía para descargarla ahora mismo.' : 'Hemos recibido tu pedido y ya lo estamos preparando con mimo. Te avisaremos en cuanto salga hacia tu casa.',
+      body: `${o.digital_only ? '' : steps(0)}
 ${label('Tu pedido')}${itemsTable(o)}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+${o.digital_only ? '' : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="50%" valign="top" style="padding-right:8px">${card(`${label('Enviamos a')}<p style="margin:0;font-size:14px;line-height:1.6">${esc(o.name)}<br>${addr.join('<br>')}</p>`)}</td>
 <td width="50%" valign="top" style="padding-left:8px">${card(`${label('Entrega')}<p style="margin:0;font-size:14px;line-height:1.6">En <strong>2–4 días laborables</strong> a partir de hoy.<br>Te avisaremos por email al enviarlo.</p>`)}</td>
 </tr></table>
-<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>`}
 <p style="margin:10px 0 0;text-align:center;font-size:12px;color:${C.muted}">Necesitarás tu nº de pedido <strong>#${o.order_number}</strong> y este email.</p>
 ${o.invoice_url ? `<p style="margin:14px 0 0;text-align:center;font-size:13px"><a href="${esc(o.invoice_url)}" style="color:${C.green};font-weight:600">Descargar tu factura (PDF)</a></p>` : ''}
 ${o.guide_url ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0"><tr><td bgcolor="${C.cream}" style="background:${C.cream};border-radius:16px;padding:22px 22px;text-align:center">
-<p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.olive};font-weight:700">🎁 Tu regalo</p>
+<p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.olive};font-weight:700">${o.guide_bought ? '📘 Tu guía' : '🎁 Tu regalo'}</p>
 <p style="margin:0 0 8px;font-family:${SERIF};font-size:22px;color:${C.green}">Guía «Tu momento, cada día»</p>
-<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${C.text}">Ideas sencillas de alimentación, descanso y hábitos para acompañar tu rutina Glowfit. Ya puedes descargarla, aunque tu pedido aún no haya llegado.</p>
+<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${C.text}">Ideas sencillas de alimentación, descanso y hábitos para acompañar tu rutina Glowfit. ${o.digital_only ? 'Ya puedes descargarla. También la tienes dentro de tu app Glowfit.' : 'Ya puedes descargarla, aunque tu pedido aún no haya llegado.'}</p>
 ${button(o.guide_url, 'Descargar mi guía (PDF)')}</td></tr></table>` : ''}`,
       footerNote: '¿Alguna duda con tu pedido? Responde a este email y te ayudamos encantados.',
     }),
