@@ -9,6 +9,7 @@ import { CartProvider } from '@/components/cart';
 import { CurrencyProvider } from '@/components/currency';
 import { media } from '@/lib/config';
 import SiteAnalytics from '@/components/SiteAnalytics';
+import PageTracker from '@/components/PageTracker';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WhatsApp />
           <CookieBanner />
           <SiteAnalytics />
+          <PageTracker />
         </CartProvider>
         </CurrencyProvider>
       </body>
