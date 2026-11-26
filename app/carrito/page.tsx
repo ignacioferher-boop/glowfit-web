@@ -2,7 +2,7 @@
 import { emailSuggestion, normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
 import { useState } from 'react';
 import { useCart } from '@/components/cart';
-import { formatEUR, SHIPPING } from '@/lib/config';
+import { formatEUR, SHIPPING, onlyTestProduct } from '@/lib/config';
 import { useCurrency, CurrencyNote } from '@/components/currency';
 
 export default function Carrito() {
@@ -26,7 +26,7 @@ export default function Carrito() {
     onBlur: () => setTouched({ ...touched, [k]: true }),
     'aria-invalid': touched[k] && !!errors[k],
   });
-  const free = SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents;
+  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents) || onlyTestProduct(items.map((i) => i.slug));
   const shipping = items.length === 0 ? 0 : free ? 0 : SHIPPING.standardCents;
 
   async function checkout() {

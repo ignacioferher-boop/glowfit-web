@@ -1,4 +1,5 @@
 import { getProducts } from '@/lib/data';
+import { TEST_PRODUCT_SLUG } from '@/lib/config';
 import { media } from '@/lib/config';
 import { enrich } from '@/lib/shop';
 import ProductCard from '@/components/ProductCard';
@@ -9,7 +10,7 @@ export const metadata = { title: 'Productos', description: 'Suplementos Glowfit:
 
 export default async function Productos({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
   const { cat } = await searchParams;
-  const all = enrich(await getProducts());
+  const all = enrich((await getProducts()).filter((p) => p.slug !== TEST_PRODUCT_SLUG));
   const cats = [...new Set(all.map((p) => p.category).filter(Boolean))] as string[];
   const products = cat ? all.filter((p) => p.category?.toLowerCase() === cat.toLowerCase()) : all;
   const label = (c: string) => c.charAt(0) + c.slice(1).toLowerCase();
