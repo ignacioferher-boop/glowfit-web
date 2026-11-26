@@ -6,7 +6,9 @@ import { Empty, Icon, Modal, Skeleton, Switch, ago, downloadCSV, useToast, when 
 
 type Member = { id: string; created_at: string; email: string; name: string | null; code: string; source: string; has_guide: boolean; code_expires_at: string; code_emailed_at: string | null; activated_at: string | null; last_seen_at: string | null; visits: number; installed_at: string | null; platform: string | null; revoked: boolean; order_number: number | null; checks_7d: number };
 type Item = { id: string; text: string; sort: number; active: boolean };
-type Content = { id: string; kind: 'receta' | 'entrenamiento' | 'tip'; title: string; summary: string | null; body: string | null; image_url: string | null; sort: number; active: boolean };
+type Content = { id: string; kind: 'receta' | 'entrenamiento' | 'tip'; title: string; summary: string | null; body: string | null; image_url: string | null; sort: number; active: boolean; day: number | null; meal: string | null };
+const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const MEALS = ['desayuno', 'comida', 'merienda', 'cena'];
 const KINDS = [{ v: 'receta', l: 'Receta' }, { v: 'entrenamiento', l: 'Entrenamiento' }, { v: 'tip', l: 'Tip' }] as const;
 
 export default function AppAdmin() {
@@ -243,7 +245,7 @@ function Contents() {
   const [rows, setRows] = useState<Content[] | null>(null);
   const [kind, setKind] = useState<'all' | Content['kind']>('all');
   const [edit, setEdit] = useState<Content | null>(null);
-  const load = useCallback(async () => { const { data } = await sb().from('app_content').select('*').order('sort').order('created_at', { ascending: false }); setRows((data as Content[]) ?? []); }, []);
+  const load = useCallback(async () => { const { data } = await sb().from('app_content').select('*').order('day', { nullsFirst: true }).order('sort').order('created_at', { ascending: false }); setRows((data as Content[]) ?? []); }, []);
   useEffect(() => { load(); }, [load]);
   const list = useMemo(() => (rows ?? []).filter((r) => kind === 'all' || r.kind === kind), [rows, kind]);
   async function move(id: string, d: -1 | 1) {
@@ -253,10 +255,10 @@ function Contents() {
     if (res.some((x) => x.error)) toast('No se pudo ordenar', 'err');
   }
   if (!rows) return <Skeleton rows={5} />;
-  const blank: Content = { id: '', kind: 'receta', title: '', summary: '', body: '', image_url: null, sort: 0, active: true };
+  const blank: Content = { id: '', kind: 'receta', title: '', summary: '', body: '', image_url: null, sort: 0, active: true, day: null, meal: null };
   return (
     <>
-      <p className="ad-note" style={{ background: '#f3efe7' }}>Lo que publiques aquí aparece en el carrusel «Ideas para tu día» de la app. Recuerda: sin prometer efectos sobre la salud ni la pérdida de peso (normativa de complementos alimenticios).</p>
+      <p className="ad-note" style={{ background: '#f3efe7' }}>Lo que publiques aquí aparece en «Tu plan de hoy» de la app, según el día de la semana que elijas (o todos los días). Recuerda: sin prometer efectos sobre la salud ni la pérdida de peso (normativa de complementos alimenticios).</p>
       <div className="ad-toolbar ad-rise" style={{ justifyContent: 'space-between' }}>
         <div className="ad-chips" role="tablist" style={{ margin: 0 }}>
           {([['all', 'Todo'], ['receta', 'Recetas'], ['entrenamiento', 'Entrenamientos'], ['tip', 'Tips']] as const).map(([k, l]) => (
@@ -272,7 +274,7 @@ function Contents() {
               <button onClick={() => setEdit(c)} style={{ border: 0, padding: 0, background: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit', color: 'inherit', flex: 1 }}>
                 <div style={{ aspectRatio: '4/3', background: c.image_url ? `center/cover url(${JSON.stringify(c.image_url)})` : '#f3efe7', display: 'grid', placeItems: 'center', fontSize: 34 }}>{!c.image_url && (c.kind === 'receta' ? '🥗' : c.kind === 'entrenamiento' ? '🧘‍♀️' : '🌿')}</div>
                 <div style={{ padding: '12px 14px' }}>
-                  <small className="ad-muted" style={{ textTransform: 'uppercase', letterSpacing: '.1em', fontSize: '.7rem' }}>{KINDS.find((k) => k.v === c.kind)?.l}{!c.active && ' · oculto'}</small>
+                  <small className="ad-muted" style={{ textTransform: 'uppercase', letterSpacing: '.1em', fontSize: '.7rem' }}>{c.day ? `${DAYS[c.day - 1]} · ` : 'Todos los días · '}{c.kind === 'receta' && c.meal ? c.meal : KINDS.find((k) => k.v === c.kind)?.l}{!c.active && ' · oculto'}</small>
                   <h3 style={{ fontSize: '1.1rem', margin: '2px 0 4px' }}>{c.title}</h3>
                   {c.summary && <p className="ad-muted sm" style={{ margin: 0 }}>{c.summary}</p>}
                 </div>
@@ -312,7 +314,7 @@ function ContentModal({ c, nextSort, onClose, done }: { c: Content; nextSort: nu
     e.preventDefault();
     if (!p.title.trim()) return setErr('Escribe un título');
     setBusy(true);
-    const row = { kind: p.kind, title: p.title.trim(), summary: p.summary?.trim() || null, body: p.body?.trim() || null, image_url: p.image_url, active: p.active };
+    const row = { kind: p.kind, day: p.day, meal: p.kind === 'receta' ? p.meal : null, title: p.title.trim(), summary: p.summary?.trim() || null, body: p.body?.trim() || null, image_url: p.image_url, active: p.active };
     const { error } = p.id ? await sb().from('app_content').update(row).eq('id', p.id) : await sb().from('app_content').insert({ ...row, sort: nextSort });
     setBusy(false);
     if (error) return toast('No se pudo guardar', 'err');
@@ -327,6 +329,10 @@ function ContentModal({ c, nextSort, onClose, done }: { c: Content; nextSort: nu
     <Modal title={p.id ? 'Editar contenido' : 'Nuevo contenido'} onClose={onClose} wide>
       <form onSubmit={save} noValidate>
         <label className="ad-field"><span>Tipo</span><select value={p.kind} onChange={(e) => set('kind', e.target.value as Content['kind'])}>{KINDS.map((k) => <option key={k.v} value={k.v}>{k.l}</option>)}</select></label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <label className="ad-field"><span>Día de la semana</span><select value={p.day ?? ''} onChange={(e) => set('day', e.target.value ? Number(e.target.value) : null)}><option value="">Todos los días</option>{DAYS.map((d, i) => <option key={d} value={i + 1}>{d}</option>)}</select></label>
+          {p.kind === 'receta' && <label className="ad-field"><span>Comida</span><select value={p.meal ?? ''} onChange={(e) => set('meal', e.target.value || null)}><option value="">Cualquiera</option>{MEALS.map((m) => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}</select></label>}
+        </div>
         <label className="ad-field"><span>Título</span><input value={p.title} maxLength={90} onChange={(e) => { set('title', e.target.value); setErr(''); }} onBlur={() => !p.title.trim() && setErr('Escribe un título')} aria-invalid={!!err} placeholder="Ej. Crema de calabaza" data-autofocus />{err && <em className="ad-err">{err}</em>}</label>
         <label className="ad-field"><span>Frase corta <small>(se ve en la tarjeta)</small></span><input value={p.summary ?? ''} maxLength={90} onChange={(e) => set('summary', e.target.value)} placeholder="Ej. Lista en 20 minutos" /></label>
         <label className="ad-field"><span>Texto completo <small>(ingredientes, pasos… deja una línea en blanco entre párrafos)</small></span><textarea rows={9} value={p.body ?? ''} onChange={(e) => set('body', e.target.value)} /></label>
