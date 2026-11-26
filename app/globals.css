@@ -569,3 +569,15 @@ body:has(.hs-preview) .site-footer:not(.draft-footer) { display: none; }
 .bf-price small { opacity: .7; font-size: .75em; }
 .bf-btn { background: #fff; color: #111; white-space: nowrap; font-size: 15px; }
 @media (max-width: 560px) { .bf-promo { flex-wrap: wrap; } .bf-btn { width: 100%; text-align: center; } }
+
+/* Seguimiento del cliente */
+.fu-wrap { margin-top: 24px; }
+.fu-stop { background: var(--cream, #f8f2ea); border-radius: 16px; padding: 18px 20px; margin-bottom: 24px; text-align: center; }
+.fu-stop p { margin: 0 0 10px; }
+.btn-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
+.fu-thread { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 16px; }
+.fu-thread li { display: flex; flex-direction: column; gap: 4px; max-width: 92%; }
+.fu-thread li.me { align-self: flex-end; align-items: flex-end; }
+.fu-who { font-size: .78rem; opacity: .7; }
+.fu-bubble { white-space: pre-wrap; padding: 14px 16px; border-radius: 16px; line-height: 1.65; background: #f8f2ea; text-align: left; }
+.fu-thread li.me .fu-bubble { background: #e9eddf; }

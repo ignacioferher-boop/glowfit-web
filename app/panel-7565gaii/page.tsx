@@ -13,8 +13,9 @@ import Inventory from '@/components/admin/Inventory';
 import SiteEditor from '@/components/admin/SiteEditor';
 import Promos from '@/components/admin/Promos';
 import ReviewsAdmin from '@/components/admin/ReviewsAdmin';
+import FollowupsAdmin from '@/components/admin/FollowupsAdmin';
 
-type Tab = 'home' | 'orders' | 'products' | 'inventory' | 'editor' | 'customers' | 'promos' | 'reviews' | 'settings';
+type Tab = 'home' | 'orders' | 'products' | 'inventory' | 'editor' | 'customers' | 'promos' | 'reviews' | 'followups' | 'settings';
 type G = 'shop' | 'catalog' | 'web' | 'account';
 const GROUPS: { k: G; l: string }[] = [{ k: 'shop', l: 'Ventas' }, { k: 'catalog', l: 'Catálogo' }, { k: 'web', l: 'Tu web' }, { k: 'account', l: 'Cuenta' }];
 // m = aparece en la barra inferior del móvil; s = nombre corto
@@ -22,6 +23,7 @@ const NAV: { k: Tab; l: string; s?: string; i: string; d: string; g: G; m?: bool
   { k: 'home', l: 'Resumen', i: 'home', d: 'Cómo va la tienda de un vistazo', g: 'shop', m: true },
   { k: 'orders', l: 'Pedidos', i: 'orders', d: 'Prepara, envía y sigue cada pedido', g: 'shop', m: true },
   { k: 'customers', l: 'Clientes', i: 'users', d: 'Quién te ha comprado y sus datos', g: 'shop' },
+  { k: 'followups', l: 'Seguimiento', i: 'mail', d: 'Mensajes a tus clientes tras la compra y sus respuestas', g: 'shop' },
   { k: 'promos', l: 'Descuentos', i: 'ticket', d: 'Códigos de descuento para tus clientes', g: 'shop' },
   { k: 'reviews', l: 'Opiniones', i: 'star', d: 'Valoraciones de clientes y cuáles publicar', g: 'shop' },
   { k: 'products', l: 'Productos', i: 'box', d: 'Precios, fotos, textos y packs', g: 'catalog', m: true },
@@ -196,6 +198,7 @@ function App({ email }: { email: string }) {
           {tab === 'customers' && <Customers />}
           {tab === 'promos' && <Promos />}
           {tab === 'reviews' && <ReviewsAdmin />}
+          {tab === 'followups' && <FollowupsAdmin />}
           {tab === 'settings' && <Settings email={email} />}
         </div>
       </main>

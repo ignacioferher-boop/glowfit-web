@@ -2,6 +2,8 @@
 const nextConfig = {
   trailingSlash: true,
   poweredByHeader: false,
+  // La guía PDF solo se sirve desde /api/guia (enlace personal), no es pública
+  outputFileTracingIncludes: { '/api/guia': ['./private/guia.pdf'] },
   async headers() {
     const security = [
       { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
