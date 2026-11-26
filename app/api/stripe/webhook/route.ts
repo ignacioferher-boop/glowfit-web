@@ -20,6 +20,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: 'firma no válida' }, { status: 400 });
   }
+  // Destinos con carga "Breve" (thin events): el tipo llega como "v1.checkout.session.completed"
+  // y solo traen el id de la sesión, así que la pedimos a Stripe (ya firmada y verificada arriba).
+  const thin = event as unknown as { object?: string; type: string; related_object?: { id?: string } };
+  if (thin.object === 'v2.core.event' || thin.type.startsWith('v1.')) {
+    const type = thin.type.replace(/^v1\./, '');
+    const id = thin.related_object?.id;
+    if (!type.startsWith('checkout.session.') || !id) return NextResponse.json({ received: true });
+    const session = await stripe.checkout.sessions.retrieve(id);
+    event = { ...(event as object), type, data: { object: session } } as unknown as Stripe.Event;
+  }
 
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const s = event.data.object as Stripe.Checkout.Session;
