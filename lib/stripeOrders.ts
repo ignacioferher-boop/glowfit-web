@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
 import { guideGiftActive, guideUrl } from './guide';
 import { notifyAdmins } from './push';
+import { grantAppAccess } from './app-access';
 import { customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
 import { getInventorySettings } from '@/lib/settings';
 
@@ -50,6 +51,8 @@ export async function recordPaidSession(stripe: Stripe, sessionId: string, order
       // Aviso al móvil de los administradores (si lo tienen activado). Nunca bloquea el pedido.
       const units = items.reduce((n: number, i: { qty?: number | null }) => n + (i.qty ?? 0), 0);
       await notifyAdmins({ title: `🛍️ Nuevo pedido #${row.order_number} · ${(order.total_cents / 100).toFixed(2).replace('.', ',')} €`, body: `${order.name || order.email} · ${units} ${units === 1 ? 'producto' : 'productos'}`, tag: `order-${row.order_number}` });
+      // Acceso a la app privada de clientes: código personal por email (no bloquea nunca el pedido)
+      if (ok) await grantAppAccess({ email: order.email, name: order.name, orderNumber: row.order_number, source: 'pedido', guide: true });
       if (!ok) await supabasePublic.rpc('unclaim_order_email', { p_secret: orderSecret, p_session: full.id }); // se reintentará
       // Aviso de stock bajo a la tienda (una vez por pedido)
       const inv = await getInventorySettings();
