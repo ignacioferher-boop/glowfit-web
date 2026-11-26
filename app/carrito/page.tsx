@@ -5,7 +5,7 @@ import { useCart } from '@/components/cart';
 import { formatEUR, SHIPPING } from '@/lib/config';
 import { useCurrency, CurrencyNote } from '@/components/currency';
 import GiftGuide from '@/components/GiftGuide';
-import { allDigital } from '@/lib/digital';
+import { allDigital, isFreeShipping } from '@/lib/digital';
 
 export default function Carrito() {
   const { items, setQty, remove, subtotal, notice, sync } = useCart();
@@ -30,7 +30,7 @@ export default function Carrito() {
     onBlur: () => setTouched({ ...touched, [k]: true }),
     'aria-invalid': touched[k] && !!errors[k],
   });
-  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents);
+  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents) || (items.length > 0 && items.every((i) => isFreeShipping(i.slug)));
   const digitalOnly = allDigital(items.map((i) => i.slug));
   const shipping = items.length === 0 || digitalOnly ? 0 : free ? 0 : SHIPPING.standardCents;
 

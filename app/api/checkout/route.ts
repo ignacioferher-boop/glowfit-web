@@ -7,7 +7,7 @@ import { checkStock } from '@/lib/stock';
 import { getInventorySettings } from '@/lib/settings';
 import { allow, clientIp, tooMany } from '@/lib/ratelimit';
 import { normPhoneES, validEmailAddr, validFullName } from '@/lib/validate';
-import { allDigital, isDigital } from '@/lib/digital';
+import { allDigital, isDigital, isFreeShipping } from '@/lib/digital';
 
 type CustomerIn = { name?: string; email?: string; phone?: string; accepts_marketing?: boolean; accepted_terms?: boolean };
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   if (missing.length) return NextResponse.json({ error: 'Uno de los productos de tu carrito ya no está disponible. Quítalo del carrito para continuar.', unavailable: missing.map((m) => m.slug) }, { status: 409 });
 
   const subtotal = lines.reduce((n, l) => n + l.p.price_cents * l.qty, 0);
-  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents);
+  const free = (SHIPPING.freeFromCents > 0 && subtotal >= SHIPPING.freeFromCents) || lines.every((l) => isFreeShipping(l.p.slug));
   const site = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
   // Solo productos digitales (la guía): sin envío ni dirección
   const digitalOnly = allDigital(lines.map((l) => l.p.slug));
