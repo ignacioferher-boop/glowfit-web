@@ -6,6 +6,7 @@ import { cleanHtml } from '@/lib/sanitize';
 import type { Metadata } from 'next';
 import { getProducts } from '@/lib/data';
 import { SHIPPING } from '@/lib/config';
+import { isDigital } from '@/lib/digital';
 import { enrich } from '@/lib/shop';
 import Gallery from '@/components/Gallery';
 import AddToCart from '@/components/AddToCart';
@@ -36,6 +37,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) {
     // Mientras dura el Black Friday, el Pack Quema Grasa está oculto: quien llegue por un enlace antiguo ve la oferta
     if (slug === 'pack-glowxpro-bloom' && all.some((p) => p.slug === 'pack-black-friday')) redirect('/producto/pack-black-friday/');
+    // Terminado el Black Friday, los enlaces a la oferta llevan al pack normal
+    if (slug === 'pack-black-friday' && all.some((p) => p.slug === 'pack-glowxpro-bloom')) redirect('/producto/pack-glowxpro-bloom/');
     notFound();
   }
   const related = [...all.filter((p) => p.slug !== slug && p.category === product.category), ...all.filter((p) => p.slug !== slug && p.category !== product.category)].slice(0, 3);
@@ -85,7 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {save > 0 && <span className="card-badge save static">Ahorras <Price cents={save} /></span>}
             {(product.slug === 'pack-black-friday' || guideGiftActive()) && <span className="card-badge bf static">{product.slug === 'pack-black-friday' ? 'BLACK FRIDAY' : 'BLACK FRIDAY · 🎁 GUÍA DE REGALO'}</span>}
           </div>
-          <p className="tax-note">IVA incluido{SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
+          <p className="tax-note">IVA incluido{isDigital(product.slug) ? ' · Producto digital: lo recibes al momento en tu email y en tu app Glowfit' : SHIPPING.freeFromCents > 0 && (product.price_cents >= SHIPPING.freeFromCents ? ' · Envío gratis' : <> · Envío gratis desde <Price cents={SHIPPING.freeFromCents} /></>)}</p>
 
           {isPack && (
             <div className="pack-includes">
@@ -112,10 +115,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="rich" dangerouslySetInnerHTML={{ __html: cleanHtml(longDesc) }} />
               </details>
             )}
-            <details>
+            {!isDigital(product.slug) && <details>
               <summary>Envíos y entregas</summary>
               <p>Enviamos a toda España en {SHIPPING.minDays}–{SHIPPING.maxDays} días laborables. El envío cuesta <Price cents={SHIPPING.standardCents} />{SHIPPING.freeFromCents > 0 && <> y es gratis a partir de <Price cents={SHIPPING.freeFromCents} /></>}. <a href="/envios-y-entregas/">Más información</a></p>
-            </details>
+            </details>}
             <details>
               <summary>Devoluciones</summary>
               <p>Tienes 14 días desde que lo recibes para devolver productos precintados y sin abrir. <a href="/reembolso_devoluciones/">Ver cómo devolver</a></p>
