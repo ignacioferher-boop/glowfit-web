@@ -7,6 +7,7 @@ export type OrderMail = {
   order_number: number; name: string; email: string; phone?: string | null; tax_id?: string | null;
   address?: Record<string, string | null> | null; items: Item[]; shipping_cents: number; total_cents: number;
   invoice_url?: string | null;
+  guide_url?: string | null;
 };
 
 const eur = (c: number | null | undefined) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format((c ?? 0) / 100);
@@ -106,7 +107,12 @@ ${label('Tu pedido')}${itemsTable(o)}
 </tr></table>
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:12px auto 0"><tr><td>${button(`${SITE}/mi-pedido/`, 'Ver el estado de mi pedido')}</td></tr></table>
 <p style="margin:10px 0 0;text-align:center;font-size:12px;color:${C.muted}">Necesitarás tu nº de pedido <strong>#${o.order_number}</strong> y este email.</p>
-${o.invoice_url ? `<p style="margin:14px 0 0;text-align:center;font-size:13px"><a href="${esc(o.invoice_url)}" style="color:${C.green};font-weight:600">Descargar tu factura (PDF)</a></p>` : ''}`,
+${o.invoice_url ? `<p style="margin:14px 0 0;text-align:center;font-size:13px"><a href="${esc(o.invoice_url)}" style="color:${C.green};font-weight:600">Descargar tu factura (PDF)</a></p>` : ''}
+${o.guide_url ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0"><tr><td bgcolor="${C.cream}" style="background:${C.cream};border-radius:16px;padding:22px 22px;text-align:center">
+<p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.olive};font-weight:700">🎁 Tu regalo</p>
+<p style="margin:0 0 8px;font-family:${SERIF};font-size:22px;color:${C.green}">Guía «Tu momento, cada día»</p>
+<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:${C.text}">Ideas sencillas de alimentación, descanso y hábitos para acompañar tu rutina Glowfit. Ya puedes descargarla, aunque tu pedido aún no haya llegado.</p>
+${button(o.guide_url, 'Descargar mi guía (PDF)')}</td></tr></table>` : ''}`,
       footerNote: '¿Alguna duda con tu pedido? Responde a este email y te ayudamos encantados.',
     }),
   };
@@ -266,4 +272,56 @@ export async function sendEmail(to: string, msg: { subject: string; html: string
   });
   if (!r.ok) console.error('Resend', r.status, await r.text());
   return r.ok;
+}
+
+// ── Seguimiento tras la compra ──
+const paras = (t: string) => t.split(/\n{2,}/).map((p) => {
+  const lines = p.split('\n');
+  if (lines.every((l) => l.trim().startsWith('•'))) return `<ul style="margin:0 0 16px;padding-left:20px">${lines.map((l) => `<li style="margin:0 0 6px">${esc(l.replace(/^\s*•\s*/, ''))}</li>`).join('')}</ul>`;
+  return `<p style="margin:0 0 16px">${lines.map(esc).join('<br>')}</p>`;
+}).join('');
+
+export function followupEmail(o: { subject: string; body: string; url: string; stopUrl: string; step: number; guideUrl?: string | null }) {
+  const pre = o.body.split('\n').find((l) => l.trim() && !/^hola/i.test(l.trim())) || o.subject;
+  return {
+    subject: o.subject,
+    html: layout({
+      preheader: pre.slice(0, 140),
+      eyebrow: ['', 'Tu seguimiento', 'Dos semanas contigo', 'Un mes contigo'][o.step] || 'Tu seguimiento',
+      title: o.subject.replace(/^[^,]+,\s*/, '').replace(/^./, (c) => c.toUpperCase()),
+      body: `<div style="font-size:15px;line-height:1.7;color:${C.text}">${paras(o.body)}</div>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:8px auto 0"><tr><td>${button(o.url, 'Contestar a Glowfit')}</td></tr></table>
+<p style="margin:12px 0 0;text-align:center;font-size:12px;color:${C.muted}">También puedes responder directamente a este email.</p>
+${o.guideUrl ? `<p style="margin:22px 0 0;text-align:center;font-size:13px;color:${C.muted}">PD: ¿Ya has abierto tu guía «Tu momento, cada día»? <a href="${esc(o.guideUrl)}" style="color:${C.green};font-weight:600">Descárgala aquí</a>.</p>` : ''}`,
+      footerNote: `Te escribimos porque compraste en Glowfit y queremos saber cómo te va. <a href="${esc(o.stopUrl)}" style="color:${C.muted}">No quiero recibir más mensajes de seguimiento</a>.`,
+    }),
+  };
+}
+
+export function followupReplyToCustomerEmail(o: { name: string; reply: string; url: string }) {
+  const first = (o.name || '').split(' ')[0] || 'Hola';
+  return {
+    subject: `${first}, te hemos contestado · Glowfit`,
+    html: layout({
+      preheader: o.reply.slice(0, 140),
+      eyebrow: 'Mensaje de Glowfit', title: `Te hemos contestado, ${esc(first)}`,
+      body: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px"><tr><td style="border-left:3px solid ${C.olive};padding:6px 0 6px 18px;font-size:15px;line-height:1.7;color:${C.text}">${paras(o.reply)}</td></tr></table>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td>${button(o.url, 'Ver la conversación y contestar')}</td></tr></table>`,
+      footerNote: 'Puedes responder a este email o desde el botón de arriba.',
+    }),
+  };
+}
+
+export function followupNewReplyShopEmail(o: { name: string; email: string; order_number: number; body: string }) {
+  return {
+    subject: `💬 ${o.name || 'Un cliente'} ha contestado al seguimiento (pedido #${o.order_number})`,
+    html: layout({
+      preheader: o.body.slice(0, 140),
+      eyebrow: 'Seguimiento de clientes', title: `${esc(o.name || 'Cliente')} te ha escrito`,
+      intro: `Pedido #${o.order_number}${o.email ? ` · ${esc(o.email)}` : ''}`,
+      body: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px"><tr><td style="border-left:3px solid ${C.olive};padding:6px 0 6px 18px;font-family:${SERIF};font-size:17px;line-height:1.7;color:${C.text};white-space:pre-wrap">${esc(o.body)}</td></tr></table>
+<p style="margin:0;text-align:center">${button(PANEL, 'Contestar desde el panel')}</p>`,
+      footerNote: 'Contesta desde el panel → Seguimiento: así la conversación queda guardada y el cliente recibe tu respuesta por email.',
+    }),
+  };
 }

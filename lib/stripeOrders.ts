@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import type Stripe from 'stripe';
 import { supabasePublic } from '@/lib/data';
+import { guideGiftActive, guideUrl } from './guide';
 import { customerEmail, lowStockEmail, sendEmail, shopEmail } from '@/lib/email';
 import { getInventorySettings } from '@/lib/settings';
 
@@ -42,7 +43,7 @@ export async function recordPaidSession(stripe: Stripe, sessionId: string, order
       : false;
     if (claimed && order.email) {
       const taxId = (full.customer_details?.tax_ids ?? []).map((t) => t.value).filter(Boolean).join(', ') || null;
-      const mail = { invoice_url: invoiceUrl, tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };
+      const mail = { invoice_url: invoiceUrl, tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents, guide_url: guideGiftActive() ? guideUrl(row.order_number) : null };
       const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
       if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
       if (!ok) await supabasePublic.rpc('unclaim_order_email', { p_secret: orderSecret, p_session: full.id }); // se reintentará

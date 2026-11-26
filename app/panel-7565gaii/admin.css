@@ -528,3 +528,27 @@ body:has(.ad-root) { background: #f4efe7; }
 .ad-review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .ad-list { display: flex; flex-direction: column; gap: 12px; }
 .ad-review .ad-note { background: #f4efe7; margin: 0; }
+
+/* Seguimiento tras la compra */
+.ad-fu-card { display: flex; flex-direction: column; gap: 10px; text-align: left; font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--ad-line); width: 100%; }
+.ad-fu-card:hover { border-color: var(--ad-olive); }
+.ad-fu-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ad-fu-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ad-fu-step { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; font-size: .8rem; background: #f6f2ea; color: var(--ad-muted); }
+.ad-fu-step b { font-weight: 600; color: var(--ad-text); font-size: .78rem; }
+.ad-fu-step.sent { background: #eef1e6; color: var(--ad-green); }
+.ad-fu-step.next { background: #fff; border: 1px dashed var(--ad-olive); }
+.ad-fu-step.off { opacity: .6; }
+.ad-fu-last { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-fu-contact { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.ad-fu-contact .ad-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ad-fu-pause { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--ad-line); border-radius: 12px; margin-bottom: 16px; }
+.ad-fu-thread { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ad-fu-thread li { display: flex; flex-direction: column; gap: 4px; max-width: 92%; }
+.ad-fu-thread li.me { align-self: flex-end; align-items: flex-end; }
+.ad-fu-thread li.them { align-self: flex-start; }
+.ad-fu-who { font-size: .75rem; color: var(--ad-muted); }
+.ad-fu-bubble { white-space: pre-wrap; padding: 12px 14px; border-radius: 14px; font-size: .9rem; line-height: 1.55; background: #f6f2ea; }
+.ad-fu-thread li.me .ad-fu-bubble { background: #eef1e6; }
+.ad-fu-thread li.them .ad-fu-bubble { background: #fff; border: 1px solid var(--ad-olive); }
+@media (max-width: 640px) { .ad-fu-steps { grid-template-columns: 1fr; } }
