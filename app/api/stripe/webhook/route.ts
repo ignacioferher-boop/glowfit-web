@@ -7,8 +7,8 @@ import { allow } from '@/lib/ratelimit';
 import { getInventorySettings } from '@/lib/settings';
 
 export async function POST(req: Request) {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  const whsec = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = (process.env.STRIPE_SECRET_KEY || '').trim();
+  const whsec = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
   const orderSecret = process.env.ORDER_SECRET;
   if (!secret || !whsec || !orderSecret || !supabasePublic) return NextResponse.json({ error: 'not configured' }, { status: 503 });
   const stripe = new Stripe(secret);

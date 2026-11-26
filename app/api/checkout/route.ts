@@ -38,7 +38,8 @@ export async function POST(req: Request) {
   if (custErr?.code === 'PGRST202') ({ error: custErr } = await supabasePublic!.from('customers').insert(customer));
   if (custErr) console.error('Error guardando cliente', custErr.message);
 
-  const secret = process.env.STRIPE_SECRET_KEY;
+  const secret = (process.env.STRIPE_SECRET_KEY || '').trim();
+  if (!secret) console.error('checkout: falta STRIPE_SECRET_KEY');
   if (!secret) return NextResponse.json({ error: 'El pago online se activará en breve. Hemos guardado tus datos y te contactaremos para completar tu pedido.' }, { status: 503 });
   const stripe = new Stripe(secret);
 
