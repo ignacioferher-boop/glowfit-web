@@ -36,12 +36,16 @@ export async function recordPaidSession(stripe: Stripe, sessionId: string, order
     const row = Array.isArray(data) ? data[0] : data;
     if (order.status === 'paid') revalidatePath('/', 'layout'); // refresca el stock visible en la tienda
     // Emails de confirmación (solo una vez y solo si el pago está hecho)
-    if (row && !row.email_sent && order.status === 'paid' && order.email) {
+    // "Reclama" el envío de forma atómica: si el webhook y la página de éxito llegan a la vez, solo uno manda los correos
+    const claimed = row && !row.email_sent && order.status === 'paid' && order.email
+      ? (await supabasePublic.rpc('claim_order_email', { p_secret: orderSecret, p_session: full.id })).data === true
+      : false;
+    if (claimed && order.email) {
       const taxId = (full.customer_details?.tax_ids ?? []).map((t) => t.value).filter(Boolean).join(', ') || null;
       const mail = { invoice_url: invoiceUrl, tax_id: taxId, order_number: row.order_number, name: order.name || '', email: order.email, phone: order.phone, address: order.shipping_address as Record<string, string | null> | null, items, shipping_cents: order.shipping_cents, total_cents: order.total_cents };
       const ok = await sendEmail(order.email, customerEmail(mail), process.env.ORDER_NOTIFY_EMAIL);
       if (process.env.ORDER_NOTIFY_EMAIL) await sendEmail(process.env.ORDER_NOTIFY_EMAIL, shopEmail(mail), order.email);
-      if (ok) await supabasePublic.rpc('mark_order_emailed', { p_secret: orderSecret, p_session: full.id });
+      if (!ok) await supabasePublic.rpc('unclaim_order_email', { p_secret: orderSecret, p_session: full.id }); // se reintentará
       // Aviso de stock bajo a la tienda (una vez por pedido)
       const inv = await getInventorySettings();
       if (inv.notify_low_stock && process.env.ORDER_NOTIFY_EMAIL) {
