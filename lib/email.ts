@@ -325,3 +325,28 @@ export function followupNewReplyShopEmail(o: { name: string; email: string; orde
     }),
   };
 }
+
+// ── App privada de clientes ──
+export function appCodeEmail(o: { name: string; code: string; url: string; activated?: boolean }) {
+  const first = esc((o.name || '').split(' ')[0]);
+  const step = (n: number, t: string) => `<tr><td width="34" valign="top" style="padding:0 0 12px"><span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:50%;background:${C.green};color:#fff;text-align:center;font-size:13px;font-weight:700">${n}</span></td><td valign="top" style="padding:3px 0 12px;font-size:14px;line-height:1.55;color:${C.text}">${t}</td></tr>`;
+  return {
+    subject: `${first ? `${first}, tu` : 'Tu'} acceso a la app Glowfit 🌿`,
+    html: layout({
+      preheader: `Tu código personal: ${o.code}. Checklist diaria, recetas, entrenamientos y tu guía.`,
+      eyebrow: 'Tu espacio Glowfit',
+      title: first ? `${first}, ya tienes tu app` : 'Ya tienes tu app',
+      intro: 'Con tu compra tienes acceso a la app de Glowfit: una checklist diaria de hábitos, recetas, entrenamientos y consejos, y tu guía «Tu momento, cada día».',
+      body: `${card(`${label('Tu código personal')}<p style="margin:4px 0 0;font-family:'Courier New',monospace;font-size:28px;letter-spacing:3px;font-weight:700;color:${C.green}">${esc(o.code)}</p>
+<p style="margin:8px 0 0;font-size:12px;color:${C.muted}">${o.activated ? 'Sirve para entrar desde cualquier móvil.' : 'Actívalo en los próximos 30 días. Una vez activado, el acceso es ilimitado.'}</p>`)}
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:18px auto 22px"><tr><td>${button(o.url, 'Abrir mi app')}</td></tr></table>
+${label('Instálala en tu móvil en 1 minuto')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 4px">
+${step(1, '<strong>iPhone:</strong> abre el enlace en <strong>Safari</strong>, pulsa el botón <strong>Compartir</strong> (el cuadrado con la flecha) y elige <strong>«Añadir a pantalla de inicio»</strong>.')}
+${step(2, '<strong>Android:</strong> abre el enlace en Chrome y pulsa <strong>«Descargar la aplicación»</strong>.')}
+${step(3, 'Abre la app desde el icono de Glowfit e introduce tu código.')}
+</table>`,
+      footerNote: 'Tu código es personal: no lo compartas. Si tienes cualquier problema para entrar, responde a este email y te ayudamos.',
+    }),
+  };
+}

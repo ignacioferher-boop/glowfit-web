@@ -1,0 +1,18 @@
+{
+  "id": "/app/",
+  "name": "Glowfit · Tu momento",
+  "short_name": "Glowfit",
+  "description": "Tu checklist diaria, recetas, entrenamientos y tu guía Glowfit.",
+  "lang": "es",
+  "start_url": "/app/?source=pwa",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f2ea",
+  "theme_color": "#f8f2ea",
+  "icons": [
+    { "src": "/img/app-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/app-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

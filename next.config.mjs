@@ -3,7 +3,7 @@ const nextConfig = {
   trailingSlash: true,
   poweredByHeader: false,
   // La guía PDF solo se sirve desde /api/guia (enlace personal), no es pública
-  outputFileTracingIncludes: { '/api/guia': ['./private/guia.pdf'] },
+  outputFileTracingIncludes: { '/api/guia': ['./private/guia.pdf'], '/api/app/guia': ['./private/guia.pdf'] },
   async headers() {
     const security = [
       { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
@@ -22,6 +22,8 @@ const nextConfig = {
     return [
       { source: '/:path*', headers: security },
       { source: '/panel-7565gaii/:path*', headers: privatePage },
+      { source: '/app/:path*', headers: privatePage },
+      { source: '/app/sw.js', headers: [{ key: 'Service-Worker-Allowed', value: '/app/' }, { key: 'Cache-Control', value: 'no-cache' }] },
       { source: '/vista-previa/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
       { source: '/api/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] },
     ];
