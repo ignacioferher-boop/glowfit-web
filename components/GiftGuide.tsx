@@ -6,7 +6,7 @@ export default function GiftGuide({ variant = 'band' }: { variant?: 'band' | 'co
   if (variant === 'compact') return (
     <div className="gift-compact" role="note">
       <img src="/img/guia-portada.webp" alt="" width={46} height={65} />
-      <p><strong>🎁 Regalo incluido</strong> con tu compra: la guía de bienestar «Tu momento, cada día» (PDF, 36 páginas). Te llega en el email de confirmación.</p>
+      <p><span className="gift-compact-eyebrow">BLACK FRIDAY · REGALO INCLUIDO</span><strong>Guía de bienestar «Tu momento, cada día»</strong> gratis con este pedido. 36 páginas en PDF que te llegan al momento en tu email.</p>
     </div>
   );
   return (
@@ -26,5 +26,14 @@ export default function GiftGuide({ variant = 'band' }: { variant?: 'band' | 'co
         </div>
       </div>
     </section>
+  );
+}
+
+// Cinta negra sobre la foto de cada producto durante la promoción
+export function BfRibbon({ pack = false, big = false }: { pack?: boolean; big?: boolean }) {
+  return (
+    <span className={`bf-ribbon${big ? ' big' : ''}`} aria-label={pack ? 'Oferta Black Friday con guía de regalo' : 'Black Friday: guía de regalo'}>
+      <b>BLACK FRIDAY</b><i aria-hidden="true">·</i>{pack ? <>PACK OFERTA + 🎁 GUÍA</> : <>🎁 GUÍA DE REGALO</>}
+    </span>
   );
 }
