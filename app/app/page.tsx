@@ -98,7 +98,7 @@ function IosInstall({ safari }: { safari: boolean }) {
           <button className="gf-btn ghost sm" onClick={copy}>{copied ? 'Copiado ✓' : 'Copiar código'}</button>
         </div>
       )}
-      <p className="gf-muted sm">¿Ya la tienes instalada? Ciérrala aquí y ábrela desde el icono de Glowfit.<br />¿Problemas? <a href="https://wa.me/34722406293" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te ayudamos.</p>
+      <p className="gf-muted sm">¿Ya la tienes instalada? Ciérrala aquí y ábrela desde el icono de Glowfit.<br />¿Problemas? <a href="https://wa.me/34722406290" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te ayudamos.</p>
     </div>
   );
 }

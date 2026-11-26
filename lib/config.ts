@@ -3,7 +3,7 @@ export const SITE = {
   name: 'Glowfit',
   tagline: 'Bienestar · Belleza · Hábitos',
   // PENDIENTE CLIENTE: número de WhatsApp en formato internacional sin "+" (ej. 34600000000)
-  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '34722406293',
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '34722406290',
   // PENDIENTE CLIENTE: email público de contacto
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@glowfit.group',
 };
