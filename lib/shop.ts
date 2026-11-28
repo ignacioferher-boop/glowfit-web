@@ -6,7 +6,7 @@ const EXTRA: Record<string, { tagline: string; badge?: string; includes?: string
   bloom: { tagline: 'Drenante: ayuda a eliminar líquidos retenidos, hinchazón y pesadez.' },
   'curcuma-y-curcumina': { tagline: 'Para mejores digestiones y una piel más luminosa. Con 95 % de curcumina.' },
   'pack-glowxpro-bloom': { tagline: 'Quemagrasas + drenante: control de peso y menos hinchazón.', includes: ['glow', 'bloom'] },
-  'pack-black-friday': { tagline: 'Oferta Black Friday: GlowXpro + Bloom a precio especial.', includes: ['glow', 'bloom'] },
+  'pack-black-friday': { tagline: 'GlowXpro + Bloom juntos a precio especial.', includes: ['glow', 'bloom'] },
   'pack-silueta-perfecta': { tagline: 'Rutina completa: quema grasa, drena líquidos y mejora tus digestiones.', includes: ['glow', 'bloom', 'curcuma-y-curcumina'] },
 };
 
