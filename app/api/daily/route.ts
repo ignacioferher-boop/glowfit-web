@@ -5,7 +5,6 @@ import { guideGiftActive, guideUrl } from '@/lib/guide';
 import { followupStopUrl, followupText, followupUrl } from '@/lib/followup';
 import { reviewUrl } from '@/lib/reviews';
 import { allow } from '@/lib/ratelimit';
-import { endBlackFriday } from '@/lib/black-friday-end';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -16,8 +15,6 @@ export const maxDuration = 60;
 export async function GET(req: Request) {
   const secret = process.env.ORDER_SECRET;
   if (!secret || !supabasePublic) return NextResponse.json({ error: 'not configured' }, { status: 503 });
-  // Por si el aviso de medianoche fallara: el cambio de fin de Black Friday se reintenta cada mañana (solo actúa una vez)
-  await endBlackFriday().catch(() => null);
   const cron = process.env.CRON_SECRET && req.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
   if (!cron && !(await allow('daily:tasks', 1, 20 * 3600))) return NextResponse.json({ ok: true, skipped: true });
   const { data, error } = await supabasePublic.rpc('due_review_emails', { p_secret: secret });

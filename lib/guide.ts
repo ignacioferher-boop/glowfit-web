@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
-// Guía PDF "Tu momento, cada día": regalo con cada pedido hecho hasta GUIDE_GIFT_UNTIL (semana de Black Friday).
+// Guía PDF "Tu momento, cada día": se vende como producto digital; fue regalo con los pedidos hechos hasta GUIDE_GIFT_UNTIL.
 // Para alargar o acortar la promoción, cambia esta fecha (hora de Madrid). Los enlaces ya enviados siguen funcionando.
 // La fecha está en lib/guide-gift.ts.
 export { guideGiftActive } from './guide-gift';
