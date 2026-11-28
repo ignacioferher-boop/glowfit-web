@@ -12,6 +12,40 @@ type V = {
 };
 const n = (x: number) => new Intl.NumberFormat('es-ES').format(x || 0);
 const NAMES: Record<string, string> = { '/': 'Inicio', '/productos/': 'Productos', '/carrito/': 'Carrito', '/blog/': 'Blog', '/checkout/exito/': 'Compra hecha', '/sobre-nosotros/': 'Contacto', '/mi-cuenta/': 'Mi cuenta' };
+// Ajuste pedido por la dueña: suma visitas al panel SOLO al mostrarlas (la tabla page_views no se toca).
+// Para quitarlo: NEXT_PUBLIC_VISITS_BOOST=0 en Vercel y volver a desplegar.
+const BOOST = Math.max(0, Number(process.env.NEXT_PUBLIC_VISITS_BOOST ?? 100) || 0);
+const BOOST_FROM = process.env.NEXT_PUBLIC_VISITS_BOOST_FROM || '2026-11-28';
+const TZ = 'Europe/Madrid';
+const ymd = (t: Date) => t.toLocaleDateString('en-CA', { timeZone: TZ });
+const shift = (day: string, k: number) => { const t = new Date(`${day}T12:00:00Z`); t.setUTCDate(t.getUTCDate() + k); return t.toISOString().slice(0, 10); };
+// Hoy se reparte según la hora (a medianoche 0, a las 23:59 el total), los días pasados suman entero.
+function boostFor(day: string, today: string, now: Date) {
+  if (!BOOST || day < BOOST_FROM || day > today) return 0;
+  if (day < today) return BOOST;
+  const [h, m] = now.toLocaleTimeString('en-GB', { timeZone: TZ, hour12: false }).split(':').map(Number);
+  return Math.round(BOOST * ((h % 24) * 60 + m) / 1440);
+}
+function withBoost(d: V): V {
+  if (!BOOST) return d;
+  const now = new Date(); const today = ymd(now);
+  const ratio = d.week_visitors > 0 ? Math.max(1, d.week_views / d.week_visitors) : 1.5;
+  const sum = (days: number) => { let t = 0; for (let i = 0; i < days; i++) t += boostFor(shift(today, -i), today, now); return t; };
+  const bToday = boostFor(today, today, now), bYest = boostFor(shift(today, -1), today, now), bWeek = sum(7), bMonth = sum(30);
+  const k = d.week_visitors > 0 ? (d.week_visitors + bWeek) / d.week_visitors : 1;
+  const kv = d.week_views > 0 ? (d.week_views + Math.round(bWeek * ratio)) / d.week_views : 1;
+  return {
+    ...d,
+    today_visitors: d.today_visitors + bToday, today_views: d.today_views + Math.round(bToday * ratio),
+    yesterday_visitors: d.yesterday_visitors + bYest,
+    week_visitors: d.week_visitors + bWeek, week_views: d.week_views + Math.round(bWeek * ratio),
+    month_visitors: d.month_visitors + bMonth,
+    daily: d.daily.map((x) => { const b = boostFor(String(x.day).slice(0, 10), today, now); return { ...x, visitors: x.visitors + b, views: x.views + Math.round(b * ratio) }; }),
+    sources: d.sources.map((x) => ({ ...x, visitors: Math.round(x.visitors * k) })),
+    devices: d.devices.map((x) => ({ ...x, visitors: Math.round(x.visitors * k) })),
+    pages: d.pages.map((x) => ({ ...x, views: Math.round(x.views * kv), visitors: Math.round(x.visitors * k) })),
+  };
+}
 const pageName = (p: string) => NAMES[p] ?? (p.startsWith('/producto/') ? `Producto: ${p.split('/')[2].replace(/-/g, ' ')}` : p);
 
 export default function Visits() {
@@ -19,7 +53,7 @@ export default function Visits() {
   const [err, setErr] = useState('');
   const load = useCallback(async () => {
     const { data, error } = await sb().rpc('admin_visits', { p_days: 14 });
-    if (error) setErr('No se pudieron cargar las visitas'); else { setErr(''); setD(data as V); }
+    if (error) setErr('No se pudieron cargar las visitas'); else { setErr(''); setD(withBoost(data as V)); }
   }, []);
   useEffect(() => { load(); const t = setInterval(load, 60_000); return () => clearInterval(t); }, [load]);
 
